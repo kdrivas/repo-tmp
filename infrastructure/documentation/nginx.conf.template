@@ -1,0 +1,30 @@
+server {
+    # Port replaced by entrypoint.sh.
+    listen 80;
+
+    # Accept requests for ANY hostname, including a custom domain.
+    server_name _;
+
+    # Prevent port from leaking into redirects
+    port_in_redirect off;
+
+    root /var/www/sites;
+    index index.html;
+
+    ${REDIRECT_CONFIG}
+
+    # Location block for all other requests.
+    location / {
+        # 1. $uri: Tries to find a file with the exact name (e.g., /project-1/styles.css).
+        # 2. $uri/: Tries to treat the request as a directory and serve the `index.html` file within it.
+        #           This makes both /project-1 and /project-1/ work.
+        # 3. =404: If neither exists, return a 404 error.
+        try_files $uri $uri/ =404;
+    }
+
+    # Default server error handling.
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}

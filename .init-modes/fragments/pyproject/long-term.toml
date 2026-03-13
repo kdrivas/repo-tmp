@@ -1,0 +1,48 @@
+[tool.ruff.lint]
+extend-ignore = [
+    "G004",   # Don't allow f-string in log calls.
+    "CPY",    # Ensure all files have a copyright notice.
+    "D107",   # We document `__init__` in the class itself.
+    "D418",   # overload-with-docstring; Overloads should have docstrings when they alter the API/functionality.
+    "FIX002", # Allow TODO comments.
+    "TD003",  # Allow TODO comments without issue links.
+    "PTH123", # open(argument) is more flexible since it can also take strings.
+    "S603",   # Too many false positives.
+    "TC006",  # Annoying to mandate " in `cast`. Use from __future__ import annotations for forwards references.
+
+    # The settings below are suggested to be disabled when formatting with Ruff. See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules.
+    "W191",   # tab indentation; conflicts with formatting.
+    "E111",   # indentation with with invalid multiple; conflicts with formatting.
+    "E114",   # indentation with invalid comment; conflicts with formatting.
+    "E117",   # over indented; conflicts with formatting.
+    "D206",   # indent with spaces; conflicts with formatting.
+    "D300",   # triple single quotes; conflicts with formatting.
+    "Q000",   # bad quotes inline string; conflicts with formatting.
+    "Q001",   # bad quotes multiline string; conflicts with formatting.
+    "Q002",   # bad quotes docstring; conflicts with formatting.
+    "Q003",   # avoidable escpaped quote; conflicts with formatting.
+    "COM812", # missing trailing comma; conflicts with formatting.
+    "COM819", # prohibited trailing comma; conflicts with formatting.
+]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnknownVariableType = true
+reportUnknownMemberType = true
+reportUnknownArgumentType = true
+reportUnknownParameterType = true
+reportUnknownLambdaType = false
+reportMissingTypeArgument = true
+reportMissingParameterType = true
+reportArgumentType = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryComparison = true
+reportUnnecessaryCast = true
+reportImplicitStringConcatenation = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15 # Lower complexity required for long-term production code.
+
+[tool.ruff.lint.pylint]
+max-args = 8 # Stricter limit on arguments for long-term maintainability.

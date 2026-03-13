@@ -1,0 +1,62 @@
+[tool.ruff.lint]
+extend-ignore = [
+    "G004",   # Don't allow f-string in log calls.
+    "CPY",    # Ensure all files have a copyright notice.
+    "D100",   # Missing docstring in public module
+    "D104",   # Missing docstring in public package
+    "D106",   # Missing docstring in public nested class
+    "D107",   # We document `__init__` in the class itself.
+    "D418",   # overload-with-docstring; Overloads should have docstrings when they alter the API/functionality.
+    "FIX",    # Fixme comments are allowed.
+    "TD002",  # Allow TODO comments without author.
+    "TD003",  # Allow TODO comments without issue links.
+    "PTH123", # open(argument) is more flexible since it can also take strings.
+    "S603",   # Too many false positives.
+    "TC006",  # Annoying to mandate " in `cast`. Use from __future__ import annotations for forwards references.
+
+
+    "ARG001", # Unused arguments (placeholders OK)
+    "ARG002", # Unused arguments (placeholders OK)
+    "ERA001", # Commented-out code (experimentation)
+    # Complexity rules
+    "PLR0904",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0914",
+    "PLR0915",
+    "PLR0916",
+    "PLR0917",
+
+    # The settings below are suggested to be disabled when formatting with Ruff. See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules.
+    "W191",   # tab indentation; conflicts with formatting.
+    "E111",   # indentation with with invalid multiple; conflicts with formatting.
+    "E114",   # indentation with invalid comment; conflicts with formatting.
+    "E117",   # over indented; conflicts with formatting.
+    "D206",   # indent with spaces; conflicts with formatting.
+    "D300",   # triple single quotes; conflicts with formatting.
+    "Q000",   # bad quotes inline string; conflicts with formatting.
+    "Q001",   # bad quotes multiline string; conflicts with formatting.
+    "Q002",   # bad quotes docstring; conflicts with formatting.
+    "Q003",   # avoidable escpaped quote; conflicts with formatting.
+    "COM812", # missing trailing comma; conflicts with formatting.
+    "COM819", # prohibited trailing comma; conflicts with formatting.
+]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false  # Don't report missing type stubs for third-party libraries
+reportUnknownVariableType = false  # Report variables with unknown/inferred types
+reportUnknownMemberType = false  # Report when accessing members of objects with unknown types
+reportUnknownArgumentType = false  # Report function calls with unknown argument types
+reportUnknownParameterType = false  # Report function parameters with unknown types
+reportUnknownLambdaType = false  # Lambdas have their place and type-hinting them is tricky.
+reportMissingTypeArgument = false  # Report missing type arguments for generic types (e.g., List instead of List[str])
+reportMissingParameterType = false  # Report function parameters without type annotations
+reportArgumentType = true  # Report argument type mismatches in function calls
+
+[tool.ruff.lint.mccabe]
+max-complexity = 40  # Higher complexity allowed for POC mode.
+
+[tool.ruff.lint.pylint]
+max-args = 15  # Even higher max-args for POC mode to allow rapid prototyping.

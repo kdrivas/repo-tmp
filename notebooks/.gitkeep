@@ -1,0 +1,2 @@
+# This file ensures the notebooks directory is tracked by git
+# even when it's empty. Users can place their Jupyter notebooks here.

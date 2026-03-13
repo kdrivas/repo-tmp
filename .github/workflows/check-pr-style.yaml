@@ -1,0 +1,117 @@
+name: Check PR Style
+
+on:
+  pull_request:
+    types:
+      # For all checks.
+      - opened # New PR - check initial state
+      - reopened # PR reopened - check state
+      - ready_for_review # Draft converted to ready - check all requirements
+
+      # For title checks.
+      - edited # Title/description/base branch changed - check title
+
+      # For label checks.
+      - labeled # Label added - check label requirement
+      - unlabeled # Label removed - check label requirement
+
+      # For assignee checks.
+      - assigned # Assignee added - check assignee requirement
+      - unassigned # Assignee removed - check assignee requirement
+
+      # Even if we don't need to check anything when new commits are pushed and a PR exists, GH
+      # invalidates the last check's results on new pushes, so we need to run again. Otherwise, the
+      # job's status remains as `Expected — Waiting for status to be reported`, and the PR cannot be
+      # merged. Fortunately, 6250 job-minutes cost $50, so even if we had 6250 triggers via pushes,
+      # it would still be cheap in the name of good changelogs.
+      - synchronize
+
+jobs:
+  check-pr-style:
+    # Use single job with continue-on-error steps to save on job-minutes.
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    env:
+      TITLE: ${{ github.event.pull_request.title }} # Avoid `` in title causing command execution.
+      LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+      ASSIGNEES: ${{ toJson(github.event.pull_request.assignees) }}
+      REQUESTED_REVIEWERS: ${{ toJson(github.event.pull_request.requested_reviewers) }}
+      REQUESTED_TEAMS: ${{ toJson(github.event.pull_request.requested_teams) }}
+      CHECK_STEPS: '["check-title-period","check-title-capital","check-labels","check-assignees"]'
+    steps:
+      - name: Check if PR title ends with a period
+        id: check-title-period
+        run: |
+          title="$TITLE"
+          if [[ "$title" == *"." ]]; then
+              echo "The PR title ends with a period. Please remove it."
+              exit 1
+          else
+              echo "Title is valid (no trailing period). Title: $title"
+          fi
+        continue-on-error: true
+
+      - name: Check if PR title starts with a capital letter
+        id: check-title-capital
+        run: |
+          title="$TITLE"
+          if [[ ! ${title:0:1} =~ [A-Z] ]]; then
+              echo "First character of a PR title should be UPPERCASE."
+              exit 1
+          else
+            echo "Title starts with uppercase. Title: $title"
+          fi
+        continue-on-error: true
+
+      - name: Check number of PR labels
+        id: check-labels
+        run: |
+          label_count=$(echo "$LABELS" | jq 'length')
+          if [ "$label_count" -eq 0 ]; then
+            echo "There are no labels on this PR, please add at least one."
+            exit 1
+          else
+            labels=$(echo "$LABELS" | jq -r '. | join(", ")')
+            echo "PR has $label_count label(s): $labels"
+          fi
+        continue-on-error: true
+
+      - name: Check PR has at least one assignee
+        id: check-assignees
+        run: |
+          if [ "$(echo "$ASSIGNEES" | jq '. | length')" -eq 0 ]; then
+            echo "No user is assigned to this pull request."
+            exit 1
+          else
+            assignees=$(echo "$ASSIGNEES" | jq -r '[.[].login] | join(", ")')
+            echo "Assigned users: $assignees"
+          fi
+        continue-on-error: true
+
+      - name: Fail job if any check failed
+        id: collect_result
+        run: |
+          # Parse the JSON array of step IDs
+          check_steps=$(echo "$CHECK_STEPS" | jq -r '.[]')
+
+          # Use toJson and jq because we can't access the steps array by an id stored in a variable.
+          steps_json='${{ toJson(steps) }}'
+
+          failed_checks=()
+          for step in $check_steps; do
+            outcome=$(echo "$steps_json" | jq -r --arg id "$step" '.[$id].outcome // "not_run"')
+            if [ "$outcome" = "failure" ]; then
+              failed_checks+=("$step")
+            fi
+          done
+
+          if [ ${#failed_checks[@]} -gt 0 ]; then
+            echo "One or more steps failed. Failed steps:"
+            for step in "${failed_checks[@]}"; do
+              echo "  - $step"
+            done
+            exit 1
+          else
+            echo "All steps passed."
+            exit 0
+          fi

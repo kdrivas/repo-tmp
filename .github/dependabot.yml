@@ -1,0 +1,18 @@
+# Documentation: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5 # Limit the number of open pull requests to 5. Set to 0 to prevent Dependabot from opening pull requests.
+    labels:
+      - "dependencies" # Label for pull requests created by Dependabot. Change as needed.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5 # Limit the number of open pull requests to 5. Set to 0 to prevent Dependabot from opening pull requests.
+    labels:
+      - "dependencies" # Label for pull requests created by Dependabot. Change as needed.

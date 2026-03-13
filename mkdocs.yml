@@ -1,0 +1,156 @@
+# ==> PROJECT INFORMATION
+site_name: repo tmp
+site_author: Tryolabs
+site_description: description
+site_url: https://documentation.tryolabs.com/repo-tmp
+repo_url: https://github.com/tryolabs/repo-tmp
+repo_name: tryolabs/repo-tmp
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/tryolabs-isotipo-circle-green.svg
+  favicon: assets/tryolabs-isotipo-circle-green.svg
+  features:
+    - navigation.instant
+    - navigation.tracking # Keeps the navigation section open for the current page
+    - navigation.path # Shows the breadcrumbs at the top of the page
+    - navigation.tabs # Main navigation tabs at the top
+    - navigation.expand # Expands all navigation items on the left sidebar by default
+    - navigation.top # Back to top button when you scroll up
+    - toc.integrate # Integrates the table of contents into the left sidebar
+    - content.code.copy # Adds a "copy" button to all code blocks
+    - content.code.annotate # Allows for annotating code blocks
+    - content.action.edit # Adds an "edit" button to pages
+    - content.action.view # Adds a "view source" button to pages
+    - search.suggest # Provides search suggestions as you type
+    - search.share # Can share the current search query via a button
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+plugins:
+  - search
+  - gen-files: # Dynamically generate documentation files during build
+      scripts:
+        - scripts/generate_api_reference_documentation.py
+  - literate-nav: # Use markdown files to define navigation structure
+      nav_file: SUMMARY.md
+  - section-index # Allow showing an index page when clicking on a folder of doc pages (for __init__.py)
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            show_source: true
+            members_order: source
+            separate_signature: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            merge_init_into_class: true
+
+markdown_extensions:
+  - toc:
+      permalink: true # Adds icon to headings to get a direct link
+  - pymdownx.highlight: # Nicer styling for code blocks
+      anchor_linenums: true
+      default_lang: python
+  - pymdownx.tasklist: # - [ ] clickable task lists.
+      custom_checkbox: true
+      clickable_checkbox: true
+  - admonition # Notes, warnings, etc.
+  - pymdownx.details # Collapsible "details" blocks
+  - pymdownx.caret # Subscript with ~.
+  - pymdownx.mark # Highlight with ==.
+  - pymdownx.tilde # Superscript with ^.
+  - attr_list # Allows setting attributes on elements with {#id .class key=val}
+  - md_in_html # Allows markdown inside HTML blocks.
+  - footnotes # Support footnotes with [^1] and [^1]: syntax.
+  # Allows for nesting markdown blocks inside each other (e.g., code in admonitions)
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.arithmatex: # Math support
+      generic: true
+
+extra_javascript:
+  - assets/javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+# This defines the top-level tabs and pages.
+nav:
+  - Home:
+      - Overview: index.md
+      - Getting Started:
+          - Using the Template: getting_started/using_the_template.md
+          - Configure your Repository: getting_started/configure_your_repository.md
+          - Initialization Modes: getting_started/initialization_modes.md
+          - For Existing Projects: getting_started/existing_projects.md
+  - Included Batteries:
+      - Project Structure: batteries/project_structure.md
+      - Development Environment: batteries/dev_environment.md
+      - Code Quality & Safety: batteries/code_quality.md
+      - Git Hooks: batteries/git_hooks.md
+      - Documentation: batteries/documentation.md
+      - Notebooks: batteries/notebooks.md
+      - Testing: batteries/testing.md
+      - Automation & Maintenance: batteries/automation.md
+      - Profiling Tools: batteries/profiling.md
+      - Scripts: batteries/scripts.md
+  - Development Workflow:
+      - Branch Management: workflow/branch_management.md
+      - Commit Conventions: workflow/commit_conventions.md
+      - Pull Request Process: workflow/pr_process.md
+  - Tutorials:
+      - Overview: tutorials/overview.md
+      - Documentation:
+          - Basics: tutorials/documentation/basics.md
+          - Deployments:
+              - Introduction: tutorials/documentation/deployments/introduction.md
+              - Standard Deploy: tutorials/documentation/deployments/standard_deploy.md
+      - Typing: tutorials/typing.md
+      - Docstrings: tutorials/docstrings.md
+      - git:
+          - Multiple Configurations: tutorials/git/multiple_configurations.md
+      - Google Cloud WIF Setup: tutorials/gcp_wif_setup.md
+  # The `api_reference/` directory doesn't exist in your source code; it's generated at build time.
+  # This entry is necessary to create the top-level "API Reference" tab. The `literate-nav` plugin
+  # then handles the sub-navigation within that section based on the generated
+  # `api_reference/SUMMARY.md` file.
+  - API Reference: api_reference/
+  - Template Development:
+      - Contributing: development/CONTRIBUTING.md
+      - Scripts: development/scripts.md
+      - Initialization Modes: development/initialization_modes.md
+      - Testing Changes: development/testing_changes.md
+      - Documentation: development/documentation.md
+      - Release Strategy: development/release_strategy.md
+  - Help:
+      - Troubleshooting: help/troubleshooting.md
+      - FAQ: help/faq.md
