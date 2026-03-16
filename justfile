@@ -89,30 +89,3 @@ dependency-outdated:
 
 # Run all quality checks
 check-all: lint check-types check-format test-coverage docstring-coverage
-
-# Serve docs locally with live reload
-serve-docs:
-  uv run mkdocs serve --watch-theme
-
-# Build docs and output results to site/
-build-docs:
-  uv run mkdocs build
-
-# Build documentation server Docker image
-build-docs-server:
-  docker build -t documentation-server --platform linux/amd64 --file infrastructure/documentation/Dockerfile .
-
-# List all subsites published at documentation.tryolabs.com
-docs-list-sites:
-  gcloud storage ls "gs://tryolabs-documentation" --project=tryo-documentation | awk -F/ '{print $4}'
-
-# Publish the site to documentation.tryolabs.com
-docs-publish-site:
-  gcloud storage rsync -r site "gs://tryolabs-documentation/$(basename "$(pwd)")" --project=tryo-documentation
-
-# Locally build documentation and publish the site to documentation.tryolabs.com
-docs-build-and-publish-site: build-docs docs-publish-site
-
-# Run the main application
-run:
-  uv run python {{SRC}}/src.py

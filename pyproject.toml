@@ -1,10 +1,45 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = "description"
+authors = [
+    {name = "Pacar",email = "hello@paccar.com"}
+]
+readme = "README.md"
+requires-python = "~=3.12"
+dependencies = [
+    "flytekit>=1.16.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+    "docstr-coverage>=2.3.2",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pre-commit>=4.5.1",
+    "detect-secrets>=1.5.0",
+    "memray>=1.19.2",
+    "pyinstrument>=5.1.2",
+]
+cicd = [
+    "basedpyright>=1.38.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
 [tool.pytest.ini_options]
 # Adding the current directory to the Python path so that pytest can find the modules to test.
 # Directories will be added to the head of sys.path
 # Docs relevant to this step: https://docs.pytest.org/en/7.1.x/reference/reference.html#confval-pythonpath
 pythonpath = "."
 testpaths = ["tests"]
-# ASYNC TESTING CONFIGURATION #
 # asyncio_mode = "auto" automatically detects async test functions and applies the asyncio marker
 # This allows writing async tests without explicitly adding @pytest.mark.asyncio decorator
 asyncio_mode = "auto"
@@ -63,9 +98,10 @@ reportUnusedExpression = false  # Disable for notebooks directory
 [[tool.pyright.executionEnvironments]]
 root = "."  # Default environment for all other files
 reportUnusedExpression = true  # Report expressions that appear unused
+
 [tool.ruff]
 line-length = 100
-target-version = "py312"  # Default value. Dynamically set in init.sh.
+target-version = "py312"
 extend-exclude = [".venv"]
 
 [tool.ruff.lint]
@@ -158,50 +194,3 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
-
-
-[dependency-groups]
-dev = [
-    "ruff>=0.15.6",
-    "docstr-coverage>=2.3.2",
-    "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
-    "pytest-asyncio>=1.3.0",
-    "pre-commit>=4.5.1",
-    "detect-secrets>=1.5.0",
-    "memray>=1.19.2",
-    "pyinstrument>=5.1.2",
-]
-cicd = [
-    "basedpyright>=1.38.2",
-]
-documentation = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.5",
-    "mkdocs-gen-files>=0.6.0",
-    "mkdocs-literate-nav>=0.6.2",
-    "mkdocs-section-index>=0.3.10",
-    "mkdocstrings[python]>=1.0.3",
-]
-
-
-[tool.repo-template]
-mode = "normal"
-instantiated_at = "2026-03-13T11:46:32-05:00"
-initialized_at = "2026-03-13T17:07:31Z"
-[project]
-name = "src"
-version = "0.1.0"
-description = "description"
-authors = [
-    {name = "Tryolabs",email = "hello@tryolabs.com"}
-]
-readme = "README.md"
-requires-python = "~=3.12"
-dependencies = [
-]
-
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
