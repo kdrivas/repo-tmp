@@ -1,0 +1,134 @@
+"""Simplified pipeline (ingestion, split, train, evaluate) using LogisticRegression."""
+
+from typing import Any
+
+from mlops_lib.client.mlflow import MLflowContext
+from mlops_lib.pipelines import (
+    EvalConfig,
+    IngestionConfig,
+    MLDataset,
+    MLMetric,
+    MLModel,
+    SplitConfig,
+    TrainConfig,
+)
+from mlops_lib.pipelines.base.types import DatasetSplit
+from mlops_lib.pipelines.flyte import FlytePipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+from src.data import generate_classification_dataset
+from src.utils import load_model, load_parquet, save_model, save_parquet
+
+
+class SimplifiedPipeline(FlytePipeline):
+    """Simplified pipeline with only ingestion, split, train, and evaluate steps."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="dummy_simplified",
+            container_image="src:latest",
+            experiment_name="dummy-classification",
+            run_name="dummy-classification-run",
+            ingestion_config=IngestionConfig(),
+            split_config=SplitConfig(test_size=0.2, val_size=0.0, random_state=42),
+            train_config=TrainConfig(),
+            eval_config=EvalConfig(),
+        )
+
+    def ingestion(self, _config: IngestionConfig) -> MLDataset:
+        """Generate a synthetic classification dataset and persist it.
+
+        Returns:
+            MLDataset pointing to the raw data file.
+        """
+        df = generate_classification_dataset(n_samples=200, n_features=5)
+        path = save_parquet(df, "/tmp/classification/raw.parquet")
+        return MLDataset(path=path)
+
+    def split(self, data: MLDataset, config: SplitConfig) -> dict[str, MLDataset]:
+        """Split the dataset into train and test sets.
+
+        Args:
+            data: Raw MLDataset as returned by :meth:`ingestion`.
+            config: Split configuration.
+
+        Returns:
+            Dict with ``train`` and ``test`` MLDataset entries.
+        """
+        df = (
+            load_parquet(data.path)
+            .sample(frac=1, random_state=config.random_state)
+            .reset_index(drop=True)
+        )
+        n_test = int(len(df) * config.test_size)
+
+        return {
+            "train": MLDataset(
+                path=save_parquet(df.iloc[n_test:], "/tmp/classification/train.parquet"),
+                data_split=DatasetSplit.TRAIN,
+            ),
+            "test": MLDataset(
+                path=save_parquet(df.iloc[:n_test], "/tmp/classification/test.parquet"),
+                data_split=DatasetSplit.TEST,
+            ),
+        }
+
+    def train(
+        self,
+        data_splits: dict[str, MLDataset],
+        _ml_best_parameters: dict[str, Any],
+        _config: TrainConfig,
+        _mlflow_context: MLflowContext,
+    ) -> MLModel:
+        """Train a logistic regression classifier on the training split.
+
+        Args:
+            data_splits: Dict of MLDatasets as returned by :meth:`split`.
+
+        Returns:
+            MLModel pointing to the saved model artifact.
+        """
+        df = load_parquet(data_splits["train"].path)
+        X = df.drop(columns=["target"]).to_numpy()
+        y = df["target"].to_numpy()
+
+        model = LogisticRegression(max_iter=200)
+        model.fit(X, y)
+
+        path = save_model(model, "/tmp/classification/model.joblib")
+        return MLModel(path=path, name="logistic_regression", flavor="sklearn")
+
+    def evaluate(
+        self,
+        data_splits: dict[str, MLDataset],
+        model: MLModel,
+        _config: EvalConfig,
+        _mlflow_context: MLflowContext,
+    ) -> list[MLMetric]:
+        """Compute accuracy on train and test splits.
+
+        Args:
+            data_splits: Dict of MLDatasets as returned by :meth:`split`.
+            model: Trained MLModel as returned by :meth:`train`.
+            config: Eval configuration (unused).
+            mlflow_context: MLflow run context (unused).
+
+        Returns:
+            List of MLMetric with accuracy per split.
+        """
+        clf = load_model(model.path)
+        split_enum = {"train": DatasetSplit.TRAIN, "test": DatasetSplit.TEST}
+        metrics = []
+        for name, dataset in data_splits.items():
+            df = load_parquet(dataset.path)
+            X = df.drop(columns=["target"]).to_numpy()
+            y = df["target"].to_numpy()
+            acc = float(accuracy_score(y, clf.predict(X)))
+            metrics.append(
+                MLMetric(name=f"accuracy_{name}", value=acc, data_split=split_enum[name])
+            )
+        return metrics
+
+
+simplified_pipeline = SimplifiedPipeline()

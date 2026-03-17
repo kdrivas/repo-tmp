@@ -2,15 +2,15 @@
 name = "src"
 version = "0.1.0"
 description = "description"
-authors = [
-    {name = "Pacar",email = "hello@paccar.com"}
-]
+authors = [{ name = "Paccar", email = "hello@paccar.com" }]
 readme = "README.md"
-requires-python = "~=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
     "flytekit>=1.16.0",
     "pandas>=2.0.0",
     "scikit-learn>=1.4.0",
+    "joblib>=1.3.0",
+    "mlops-lib==0.5.0",
 ]
 
 [dependency-groups]
@@ -25,172 +25,16 @@ dev = [
     "memray>=1.19.2",
     "pyinstrument>=5.1.2",
 ]
-cicd = [
-    "basedpyright>=1.38.2",
-]
+cicd = ["basedpyright>=1.38.2"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[[tool.uv.index]]
+name = "mlops-lib"
+url = "https://us-central1-python.pkg.dev/itd-968-np-mlops-observability/mlops-lib/simple/"
+explicit = true
 
-[tool.pytest.ini_options]
-# Adding the current directory to the Python path so that pytest can find the modules to test.
-# Directories will be added to the head of sys.path
-# Docs relevant to this step: https://docs.pytest.org/en/7.1.x/reference/reference.html#confval-pythonpath
-pythonpath = "."
-testpaths = ["tests"]
-# asyncio_mode = "auto" automatically detects async test functions and applies the asyncio marker
-# This allows writing async tests without explicitly adding @pytest.mark.asyncio decorator
-asyncio_mode = "auto"
-# asyncio_default_fixture_loop_scope = "function" ensures each test function gets its own event loop
-# This prevents test pollution and ensures test isolation
-asyncio_default_fixture_loop_scope = "function"
-
-[tool.coverage.report]
-exclude_also = [
-
-    # Don't complain about missing debug-only code:
-    "def __repr__",
-    "def __str__",
-    "if self\\.debug",
-
-    # Don't complain if tests don't hit defensive assertion code:
-    "raise AssertionError",
-    "raise NotImplementedError",
-
-    # Don't complain if non-runnable code isn't run:
-    "if 0:",
-    "if __name__ == .__main__.:",
-
-    # Don't complain about abstract methods, they aren't run:
-    "@(abc\\.)?abstractmethod",
-
-]
-
-omit = ["**/tests/*", "*/__init__.py", "**/logging_config.py"]
-
-include_namespace_packages = "true"
-
-[tool.pyright] # Configures VSCode Pylance and basedpyright in CI/CD.
-# Very optional: type checking. Values are off, basic and strict. See more at https://code.visualstudio.com/docs/python/settings-reference#_pylance-language-server.
-typeCheckingMode = "standard"
-
-exclude = [".venv"]  # Exclude virtual environment from type checking
-
-reportMissingTypeStubs = false  # Don't report missing type stubs for third-party libraries
-
-reportUnknownVariableType = false  # Report variables with unknown/inferred types
-reportUnknownMemberType = false  # Report when accessing members of objects with unknown types
-reportUnknownArgumentType = false  # Report function calls with unknown argument types
-reportUnknownParameterType = false  # Report function parameters with unknown types
-reportUnknownLambdaType = false  # Lambdas have their place and type-hinting them is tricky.
-
-reportMissingTypeArgument = true  # Report missing type arguments for generic types (e.g., List instead of List[str])
-reportMissingParameterType = true  # Report function parameters without type annotations
-reportArgumentType = true  # Report argument type mismatches in function calls
-
-# Execution environments to handle notebooks differently
-[[tool.pyright.executionEnvironments]]
-root = "notebooks"
-reportUnusedExpression = false  # Disable for notebooks directory
-
-[[tool.pyright.executionEnvironments]]
-root = "."  # Default environment for all other files
-reportUnusedExpression = true  # Report expressions that appear unused
-
-[tool.ruff]
-line-length = 100
-target-version = "py312"
-extend-exclude = [".venv"]
-
-[tool.ruff.lint]
-select = ["ALL"]
-
-extend-ignore = [
-    "G004",   # Don't allow f-string in log calls.
-    "CPY",    # Ensure all files have a copyright notice.
-    "D100",   # Missing docstring in public module
-    "D104",   # Missing docstring in public package
-    "D106",   # Missing docstring in public nested class
-    "D107",   # We document `__init__` in the class itself.
-    "D418",   # overload-with-docstring; Overloads should have docstrings when they alter the API/functionality.
-    "FIX",    # Fixme comments are allowed.
-    "TD002",  # Allow TODO comments without author.
-    "TD003",  # Allow TODO comments without issue links.
-    "PTH123", # open(argument) is more flexible since it can also take strings.
-    "S603",   # Too many false positives.
-    "TC006",  # Annoying to mandate " in `cast`. Use from __future__ import annotations for forwards references.
-
-    # The settings below are suggested to be disabled when formatting with Ruff. See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules.
-    "W191",   # tab indentation; conflicts with formatting.
-    "E111",   # indentation with with invalid multiple; conflicts with formatting.
-    "E114",   # indentation with invalid comment; conflicts with formatting.
-    "E117",   # over indented; conflicts with formatting.
-    "D206",   # indent with spaces; conflicts with formatting.
-    "D300",   # triple single quotes; conflicts with formatting.
-    "Q000",   # bad quotes inline string; conflicts with formatting.
-    "Q001",   # bad quotes multiline string; conflicts with formatting.
-    "Q002",   # bad quotes docstring; conflicts with formatting.
-    "Q003",   # avoidable escpaped quote; conflicts with formatting.
-    "COM812", # missing trailing comma; conflicts with formatting.
-    "COM819", # prohibited trailing comma; conflicts with formatting.
-]
-
-unfixable = [
-    "PIE794", # duplicate class field name - the fix is to delete one entry, which is unlikely to be the correct fix.
-]
-
-[tool.ruff.lint.per-file-ignores]
-"**/tests/**/*.py" = [
-    "INP001", # INP001 - Implicit namespace packages are allowed in tests.
-    "S101",   # S101 - Checks for uses of the assert keyword. - necessary for testing.
-    "B018",   # B018 - Found useless expression - necessary for testing exceptions are raised.
-    "D100",   # D100 - Module dostrings not required in test files.
-    "D104",   # D104 - Package dostrings not required in test files.
-    "ARG",    # ARG - Unused args are common in tests with mock patches and mock functions.
-    "SLF001", # Testig my own class demands private member access.
-]
-
-"**/notebooks/**/*.{py,ipynb}" = [
-    "E501",    # E501: line too long
-    "E402",    # E402: module level import not at top of file
-    "BLE",
-    "PGH",     # Enfroce declaring ignored errors specifically.
-    "PERF",
-    "S101",    # Don't allow asserts.
-    "INP",     # Allow notebooks directory to not have an __init__.py.
-    "T20",     # Don't allow print statements.
-    "ERA",     # Find commented out code.
-    "B",       # Bugbear: find likely bugs and design problems.
-    "N",       # Naming conventions.
-    "PD",      # Help improve pandas code quality.
-    "PLR2004", # Magic values used in comparisons.
-]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.ruff.lint.flake8-annotations]
-allow-star-arg-any = true
-
-[tool.ruff.lint.pycodestyle]
-ignore-overlong-task-comments = true  # Allow TODOs that go past line-length.
-
-[tool.ruff.lint.pep8-naming]
-extend-ignore-names = [
-    "X",  # Common in ML.
-]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 30  # Arbitrary high-ish value to allow somewhat complex code but not terrible code.
-
-[tool.ruff.lint.pylint]
-max-args = 12  # Higher than default value as CLIs often have many arguments.
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-docstring-code-format = true
+[tool.uv.sources]
+mlops-lib = { index = "mlops-lib" }

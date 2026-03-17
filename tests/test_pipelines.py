@@ -1,0 +1,15 @@
+"""Dummy tests."""
+
+from src.data import generate_classification_dataset, generate_regression_dataset
+
+
+def test_classification_dataset_shape() -> None:
+    """Dataset has the expected number of rows and columns."""
+    df = generate_classification_dataset(n_samples=50, n_features=4)
+    assert df.shape == (50, 5)
+
+
+def test_regression_dataset_shape() -> None:
+    """Dataset has the expected number of rows and columns."""
+    df = generate_regression_dataset(n_samples=50, n_features=3)
+    assert df.shape == (50, 4)

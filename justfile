@@ -6,10 +6,18 @@ default:
 
 # Install project dependencies
 install:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  export UV_INDEX_MLOPS_LIB_USERNAME=oauth2accesstoken
+  export UV_INDEX_MLOPS_LIB_PASSWORD=$(gcloud auth print-access-token)
   uv sync --all-groups
 
 # Remove virtual environment and reinstall dependencies
 reinstall:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  export UV_INDEX_MLOPS_LIB_USERNAME=oauth2accesstoken
+  export UV_INDEX_MLOPS_LIB_PASSWORD=$(gcloud auth print-access-token)
   rm -rf .venv
   uv sync --all-groups
 
@@ -89,3 +97,32 @@ dependency-outdated:
 
 # Run all quality checks
 check-all: lint check-types check-format test-coverage docstring-coverage
+
+# Generate <name>.yaml from a pipeline file (usage: just pipeline-yaml src/pipelines/complete_pipeline.py)
+pipeline-yaml FILE:
+  uv run mlops_lib generate_pipeline_config {{FILE}} -o pipelines/`basename {{FILE}} .py`.yaml
+
+# Run a pipeline from a pipeline.yaml config file (usage: just pipeline-run pipeline.yaml)
+pipeline-run FILE="pipeline.yaml" TARGET="local":
+  uv run mlops_lib run_pipeline {{FILE}} --target {{TARGET}}
+
+# Build the Docker image
+docker-build:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  GAR_TOKEN=$(gcloud auth print-access-token) docker build \
+    --secret id=gar_token,env=GAR_TOKEN \
+    --file infrastructure/Dockerfile \
+    --tag {{SRC}}:latest \
+    .
+
+# Build the Docker image for linux/amd64 (e.g. for GCP deployment)
+docker-build-amd64:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  GAR_TOKEN=$(gcloud auth print-access-token) docker build \
+    --secret id=gar_token,env=GAR_TOKEN \
+    --file infrastructure/Dockerfile \
+    --platform linux/amd64 \
+    --tag {{SRC}}:latest \
+    .

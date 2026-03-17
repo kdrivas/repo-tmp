@@ -1,4 +1,4 @@
-"""I/O helpers for saving and loading artifacts."""
+"""I/O helpers for saving and loading datasets and models."""
 
 from pathlib import Path
 
@@ -6,23 +6,22 @@ import joblib
 import pandas as pd
 
 
-def save_parquet(df: pd.DataFrame, path: str) -> Path:
-    """Persist a DataFrame as a Parquet file.
+def save_parquet(df: pd.DataFrame, path: str) -> str:
+    """Save a DataFrame to a Parquet file.
 
     Args:
         df: DataFrame to save.
         path: Destination file path.
 
     Returns:
-        Resolved path of the saved file.
+        The path the file was saved to.
     """
-    dest = Path(path)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(dest, index=False)
-    return dest
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(path, index=False)
+    return path
 
 
-def load_parquet(path: str | Path) -> pd.DataFrame:
+def load_parquet(path: str) -> pd.DataFrame:
     """Load a DataFrame from a Parquet file.
 
     Args:
@@ -34,24 +33,23 @@ def load_parquet(path: str | Path) -> pd.DataFrame:
     return pd.read_parquet(path)
 
 
-def save_model(model: object, path: str) -> Path:
+def save_model(model: object, path: str) -> str:
     """Serialize a model to disk with joblib.
 
     Args:
-        model: Fitted model object to serialize.
+        model: Model object to serialize.
         path: Destination file path.
 
     Returns:
-        Resolved path of the saved file.
+        The path the file was saved to.
     """
-    dest = Path(path)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, dest)
-    return dest
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, path)
+    return path
 
 
-def load_model(path: str | Path) -> object:
-    """Deserialize a model from disk.
+def load_model(path: str) -> object:
+    """Deserialize a model from disk with joblib.
 
     Args:
         path: Source file path.
