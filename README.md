@@ -28,7 +28,7 @@ just setup-hooks
 ### Generate a pipeline YAML config
 
 ```bash
-just pipeline-yaml src/pipelines/complete_pipeline.py
+just pipeline-yaml src/pipelines/complete_pipeline.py CompletePipeline
 # → generates pipelines/complete_pipeline.yaml
 ```
 
@@ -88,7 +88,7 @@ just docker-build      # Build Docker image
 1. Create `src/pipelines/my_pipeline.py` implementing `FlytePipeline`.
 2. Generate its YAML config:
    ```bash
-   just pipeline-yaml src/pipelines/my_pipeline.py
+   just pipeline-yaml src/pipelines/my_pipeline.py MyPipeline
    ```
 3. Run it:
    ```bash
