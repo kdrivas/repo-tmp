@@ -17,11 +17,11 @@ from mlops_lib.pipelines import (
 )
 from mlops_lib.pipelines.base.types import DatasetSplit
 from mlops_lib.pipelines.flyte import FlytePipeline
+from mlops_lib.storage.utils import load_model, load_parquet, save_model, save_parquet
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
 from src.data import generate_regression_dataset
-from src.utils import load_model, load_parquet, save_model, save_parquet
 
 
 class CompletePipeline(FlytePipeline):

@@ -14,11 +14,11 @@ from mlops_lib.pipelines import (
 )
 from mlops_lib.pipelines.base.types import DatasetSplit
 from mlops_lib.pipelines.flyte import FlytePipeline
+from mlops_lib.storage.utils import load_model, load_parquet, save_model, save_parquet
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 from src.data import generate_classification_dataset
-from src.utils import load_model, load_parquet, save_model, save_parquet
 
 
 class SimplifiedPipeline(FlytePipeline):
