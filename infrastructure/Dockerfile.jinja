@@ -1,0 +1,41 @@
+# Base image: official Python slim variant for the selected version
+FROM python:{{ python_version }}-slim
+
+# Install system-level build dependencies required by some Python packages (e.g. numpy, scikit-learn)
+# and git, which uv may need to resolve VCS dependencies.
+# The apt cache is removed afterwards to keep the image layer small.
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv, the fast Python package manager used to manage dependencies
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+# Copy only the files needed to resolve and install dependencies first.
+# This allows Docker to cache the dependency installation layer and skip it
+# on rebuilds when only source code changes.
+COPY pyproject.toml uv.lock README.md ./
+COPY {{ package_name }}/ ./{{ package_name }}/
+COPY pipelines/ ./pipelines/
+
+# Install production dependencies using the locked versions.
+# The Google Artifact Registry token is passed as a build secret so it is
+# never stored in the image layers.
+RUN --mount=type=secret,id=gar_token \
+    UV_INDEX_MLOPS_LIB_USERNAME=oauth2accesstoken \
+    UV_INDEX_MLOPS_LIB_PASSWORD=$(cat /run/secrets/gar_token) \
+    uv sync --frozen --no-dev
+
+# Validate that Flyte's task executor is properly installed and importable
+RUN /app/.venv/bin/pyflyte-execute --help > /dev/null
+
+# Add the virtualenv to PATH so all installed binaries are available,
+# and set PYTHONPATH so the package is importable without being installed as a package
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app"
+
+CMD ["python"]
