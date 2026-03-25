@@ -50,7 +50,7 @@ The template also includes the following automations out of the box:
 ### Generate a pipeline YAML config
 
 ```bash
-just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py CompletePipeline
+just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline
 # → generates pipelines/complete_pipeline.yaml
 ```
 
@@ -115,7 +115,7 @@ just docker-build      # Build Docker image
    ```
 3. Once the pipeline is ready, generate its YAML config:
    ```bash
-   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py MyPipeline
+   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
    ```
 4. Run it via the YAML config:
    ```bash
