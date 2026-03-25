@@ -98,13 +98,13 @@ dependency-outdated:
 # Run all quality checks
 check-all: lint check-types check-format test-coverage docstring-coverage
 
-# Generate <name>.yaml from a pipeline file (usage: just pipeline-yaml src/pipelines/complete_pipeline.py MyClass)
-pipeline-yaml FILE CLASS:
-  uv run mlops_lib generate_pipeline_config {{FILE}} {{CLASS}} -o pipelines/`basename {{FILE}} .py`.yaml
+# Generate <name>.yaml from a pipeline file (usage: just pipeline-yaml src/pipelines/complete_pipeline.py my_pipeline)
+pipeline-yaml FILE INSTANCE:
+  uv run mlops_lib generate_pipeline_config {{FILE}} {{INSTANCE}} -o pipelines/`basename {{FILE}} .py`.yaml
 
 # Run a pipeline from a pipeline.yaml config file (usage: just pipeline-run pipeline.yaml)
-pipeline-run FILE="pipeline.yaml" TARGET="local":
-  uv run mlops_lib run_pipeline {{FILE}} --target {{TARGET}}
+pipeline-run FILE="pipeline.yaml" MODE="local":
+  uv run mlops_lib run_pipeline {{FILE}} --mode {{MODE}}
 
 # Build the Docker image
 docker-build:

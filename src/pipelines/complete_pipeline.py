@@ -30,9 +30,9 @@ class CompletePipeline(FlytePipeline):
     Steps: ingestion, preprocess, split, postprocess, model_selection, train, and evaluate.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, name: str) -> None:
         super().__init__(
-            name="dummy_complete",
+            name=name,
             container_image="src:latest",
             experiment_name="dummy-regression",
             run_name="dummy-regression-run",
@@ -211,4 +211,4 @@ class CompletePipeline(FlytePipeline):
         return metrics
 
 
-complete_pipeline = CompletePipeline()
+complete_pipeline = CompletePipeline(name="complete_pipeline")
