@@ -1,0 +1,78 @@
+name: Code Quality
+
+on: push
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    env:
+      CHECK_STEPS: '["lint","check-format","docstring-coverage","check-types","test-coverage"]'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Check linting with Ruff
+        id: lint
+        run: just lint
+        continue-on-error: true
+
+      - name: Check format with Ruff
+        id: check-format
+        run: just check-format
+        continue-on-error: true
+
+      - name: Check docstring coverage
+        id: docstring-coverage
+        run: just docstring-coverage
+        continue-on-error: true
+
+      - name: Pyright typechecking
+        id: check-types
+        run: just check-types
+        continue-on-error: true
+
+      - name: Run tests and check coverage
+        id: test-coverage
+        run: just test-coverage
+        continue-on-error: true
+
+      - name: Fail job if any check failed
+        id: collect_result
+        run: |
+          # Parse the JSON array of step IDs
+          check_steps=$(echo "$CHECK_STEPS" | jq -r '.[]')
+
+          # Use toJson and jq because we can't access the steps array by an id stored in a variable.
+          steps_json='${{ toJson(steps) }}'
+
+          failed_checks=()
+          for step in $check_steps; do
+            outcome=$(echo "$steps_json" | jq -r --arg id "$step" '.[$id].outcome // "not_run"')
+            if [ "$outcome" = "failure" ]; then
+              failed_checks+=("$step")
+            fi
+          done
+
+          if [ ${#failed_checks[@]} -gt 0 ]; then
+            echo "One or more steps failed. Failed steps:"
+            for step in "${failed_checks[@]}"; do
+              echo "  - $step"
+            done
+            exit 1
+          else
+            echo "All steps passed."
+            exit 0
+          fi

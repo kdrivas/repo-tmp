@@ -1,0 +1,30 @@
+pipeline:
+  name: complete-pipeline
+  version: v1.0.0
+  module: src.pipelines.complete_pipeline
+  class: CompletePipeline
+  image:
+    name: src
+    tag: latest
+  tracking:
+    experiment: dummy-regression
+    run_name: dummy-regression-run
+    tags:
+      env: dev
+  execution:
+    mode: local
+  default_resources:
+    request:
+      cpu: "1"
+      memory: "4Gi"
+    limit:
+      cpu: "1"
+      memory: "4Gi"
+  stages:
+    data_ingestion: {}
+    preprocess: {}
+    split: {}
+    postprocess: {}
+    model_selection: {}
+    train: {}
+    evaluate: {}

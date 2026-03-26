@@ -1,0 +1,31 @@
+pipeline:
+  name: dummy-simplified
+  version: v1.0.0
+  module: src.pipelines.simplified_pipeline
+  class: SimplifiedPipeline
+  image:
+    name: src
+    tag: latest
+  tracking:
+    experiment: dummy-classification
+    run_name: dummy-classification-run
+    tags:
+      env: dev
+  execution:
+    target: local
+  default_resources:
+    request:
+      cpu: "1"
+      memory: "4Gi"
+    limit:
+      cpu: "1"
+      memory: "4Gi"
+  stages:
+    data_ingestion: {}
+    split:
+      parameters:
+        test_size: 0.2
+        val_size: 0.0
+        random_state: 42
+    train: {}
+    evaluate: {}
