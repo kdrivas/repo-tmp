@@ -3,6 +3,7 @@
 from typing import Any
 
 from mlops_lib.client.mlflow import MLflowContext
+from mlops_lib.core.logging import get_logger
 from mlops_lib.pipelines import (
     EvalConfig,
     IngestionConfig,
@@ -22,6 +23,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
 from {{ package_name }}.data import generate_regression_dataset
+
+logger = get_logger(__name__)
 
 
 class CompletePipeline(FlytePipeline):
@@ -50,8 +53,10 @@ class CompletePipeline(FlytePipeline):
         Returns:
             MLDataset pointing to the raw data file.
         """
+        logger.info("Generating regression dataset...")
         df = generate_regression_dataset(n_samples=300, n_features=5)
         path = save_parquet(df, "/tmp/regression/raw.parquet")
+        logger.info("Ingestion complete: %d rows saved to %s", len(df), path)
         return MLDataset(path=path)
 
     def preprocess(self, data: MLDataset, config: PreprocessConfig) -> MLDataset:
@@ -64,10 +69,12 @@ class CompletePipeline(FlytePipeline):
         Returns:
             MLDataset pointing to the normalized data file.
         """
+        logger.info("Preprocessing data (target_column=%s)...", config.target_column)
         df = load_parquet(data.path)
         feature_cols = [c for c in df.columns if c != config.target_column]
         df[feature_cols] = (df[feature_cols] - df[feature_cols].mean()) / df[feature_cols].std()
         path = save_parquet(df, "/tmp/regression/preprocessed.parquet")
+        logger.info("Preprocessing complete: %d features normalized", len(feature_cols))
         return MLDataset(path=path)
 
     def split(self, data: MLDataset, config: SplitConfig) -> dict[str, MLDataset]:
@@ -80,6 +87,11 @@ class CompletePipeline(FlytePipeline):
         Returns:
             Dict with ``train``, ``val``, and ``test`` MLDataset entries.
         """
+        logger.info(
+            "Splitting dataset (test=%.0f%%, val=%.0f%%)...",
+            config.test_size * 100,
+            config.val_size * 100,
+        )
         df = (
             load_parquet(data.path)
             .sample(frac=1, random_state=config.random_state)
@@ -89,7 +101,7 @@ class CompletePipeline(FlytePipeline):
         n_test = int(n * config.test_size)
         n_val = int(n * config.val_size)
 
-        return {
+        splits = {
             "train": MLDataset(
                 path=save_parquet(df.iloc[n_test + n_val :], "/tmp/regression/train.parquet"),
                 data_split=DatasetSplit.TRAIN,
@@ -103,6 +115,13 @@ class CompletePipeline(FlytePipeline):
                 data_split=DatasetSplit.TEST,
             ),
         }
+        logger.info(
+            "Split complete: train=%d, val=%d, test=%d",
+            n - n_test - n_val,
+            n_val,
+            n_test,
+        )
+        return splits
 
     def postprocess(
         self, data_splits: dict[str, MLDataset], _config: PostprocessConfig
@@ -115,6 +134,7 @@ class CompletePipeline(FlytePipeline):
         Returns:
             The same data splits unchanged.
         """
+        logger.info("Postprocess: pass-through, no changes applied")
         return data_splits
 
     def model_selection(
@@ -131,6 +151,7 @@ class CompletePipeline(FlytePipeline):
         Returns:
             Dict with the best hyperparameters found.
         """
+        logger.info("Running model selection over fit_intercept candidates...")
         train_df = load_parquet(data_splits["train"].path)
         val_df = load_parquet(data_splits["val"].path)
 
@@ -146,10 +167,12 @@ class CompletePipeline(FlytePipeline):
             model = LinearRegression(fit_intercept=fit_intercept)
             model.fit(x_train, y_train)
             mse = float(mean_squared_error(y_val, model.predict(x_val)))
+            logger.debug("fit_intercept=%s -> val_mse=%.4f", fit_intercept, mse)
             if mse < best_mse:
                 best_mse = mse
                 best_params = {"fit_intercept": fit_intercept}
 
+        logger.info("Best params: %s (val_mse=%.4f)", best_params, best_mse)
         return best_params
 
     def train(
@@ -168,15 +191,17 @@ class CompletePipeline(FlytePipeline):
         Returns:
             MLModel pointing to the saved model artifact.
         """
+        params = ml_best_parameters or {"fit_intercept": True}
+        logger.info("Training LinearRegression with params=%s...", params)
         df = load_parquet(data_splits["train"].path)
         X = df.drop(columns=["target"]).to_numpy()
         y = df["target"].to_numpy()
 
-        params = ml_best_parameters or {"fit_intercept": True}
         model = LinearRegression(**params)
         model.fit(X, y)
 
         path = save_model(model, "/tmp/regression/model.joblib")
+        logger.info("Model saved to %s", path)
         return MLModel(path=path, name="linear_regression", flavor="sklearn", params=params)
 
     def evaluate(
@@ -195,6 +220,7 @@ class CompletePipeline(FlytePipeline):
         Returns:
             List of MLMetric with MSE per split.
         """
+        logger.info("Evaluating model on all splits...")
         reg = load_model(model.path)
         split_enum = {
             "train": DatasetSplit.TRAIN,
@@ -207,6 +233,7 @@ class CompletePipeline(FlytePipeline):
             X = df.drop(columns=["target"]).to_numpy()
             y = df["target"].to_numpy()
             mse = float(mean_squared_error(y, reg.predict(X)))
+            logger.info("  %s mse=%.4f", name, mse)
             metrics.append(MLMetric(name=f"mse_{name}", value=mse, data_split=split_enum[name]))
         return metrics
 

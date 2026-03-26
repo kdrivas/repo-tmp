@@ -22,5 +22,13 @@ fi
 # Run project install
 just install
 
+# Set up pre-commit hooks
+echo "Setting up pre-commit hooks..."
+just setup-hooks
+
+# Initialize the detect-secrets baseline
+echo "Initializing secrets baseline..."
+uv run detect-secrets scan > .secrets.baseline
+
 # Self-remove
 rm -- "$0"

@@ -5,23 +5,22 @@
 ## Requirements
 
 - Python {{ python_version }}
-- `gcloud` CLI authenticated (`gcloud auth login`)
+- [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated:
+
+  ```bash
+  gcloud auth login                    # authenticates your user account
+  gcloud auth application-default login  # sets credentials for local tools (uv, Docker)
+  ```
 
 ## Installation
 
-**1. Install `uv`, `just`, and project dependencies** in one step:
+**1. Run the bootstrap script:**
 
 ```bash
 bash scripts/install_dependencies.sh
 ```
 
-The script installs `uv` and `just` if not already present, runs `just install`, then removes itself.
-
-**2. Set up pre-commit hooks:**
-
-```bash
-just setup-hooks
-```
+This installs `uv` and `just` if not already present, then runs `just install`, `just setup-hooks`, and initializes the `detect-secrets` baseline. The script removes itself when done.
 
 ## Usage
 
@@ -44,7 +43,6 @@ The template also includes the following automations out of the box:
 | Test coverage (≥ 60 %) | pytest-cov | pre-commit + CI |
 | Secret scanning | detect-secrets | pre-commit |
 | Notebook output stripping | nbstripout | pre-commit |
-| Dependency updates | Dependabot | weekly |
 | PR style validation | GitHub Actions | on PR open/edit |
 
 ### Generate a pipeline YAML config
@@ -87,8 +85,7 @@ just docker-build      # Build Docker image
 │   ├── pipelines/                  # Pipeline definitions (one file per pipeline)
 │   │   ├── complete_pipeline.py
 │   │   └── simplified_pipeline.py
-│   ├── data.py                     # Dataset generation utilities
-│   └── utils.py                    # Shared helpers (I/O, model persistence)
+│   └── data.py                     # Dataset generation utilities
 │
 ├── pipelines/                      # Generated YAML configs for each pipeline
 │   ├── complete_pipeline.yaml

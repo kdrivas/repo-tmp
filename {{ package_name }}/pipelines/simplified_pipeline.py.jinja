@@ -3,6 +3,7 @@
 from typing import Any
 
 from mlops_lib.client.mlflow import MLflowContext
+from mlops_lib.core.logging import get_logger
 from mlops_lib.pipelines import (
     EvalConfig,
     IngestionConfig,
@@ -19,6 +20,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 from {{ package_name }}.data import generate_classification_dataset
+
+logger = get_logger(__name__)
 
 
 class SimplifiedPipeline(FlytePipeline):
@@ -42,8 +45,10 @@ class SimplifiedPipeline(FlytePipeline):
         Returns:
             MLDataset pointing to the raw data file.
         """
+        logger.info("Generating classification dataset...")
         df = generate_classification_dataset(n_samples=200, n_features=5)
         path = save_parquet(df, "/tmp/classification/raw.parquet")
+        logger.info("Ingestion complete: %d rows saved to %s", len(df), path)
         return MLDataset(path=path)
 
     def split(self, data: MLDataset, config: SplitConfig) -> dict[str, MLDataset]:
@@ -56,6 +61,7 @@ class SimplifiedPipeline(FlytePipeline):
         Returns:
             Dict with ``train`` and ``test`` MLDataset entries.
         """
+        logger.info("Splitting dataset (test=%.0f%%)...", config.test_size * 100)
         df = (
             load_parquet(data.path)
             .sample(frac=1, random_state=config.random_state)
@@ -63,7 +69,7 @@ class SimplifiedPipeline(FlytePipeline):
         )
         n_test = int(len(df) * config.test_size)
 
-        return {
+        splits = {
             "train": MLDataset(
                 path=save_parquet(df.iloc[n_test:], "/tmp/classification/train.parquet"),
                 data_split=DatasetSplit.TRAIN,
@@ -73,6 +79,8 @@ class SimplifiedPipeline(FlytePipeline):
                 data_split=DatasetSplit.TEST,
             ),
         }
+        logger.info("Split complete: train=%d, test=%d", len(df) - n_test, n_test)
+        return splits
 
     def train(
         self,
@@ -89,6 +97,7 @@ class SimplifiedPipeline(FlytePipeline):
         Returns:
             MLModel pointing to the saved model artifact.
         """
+        logger.info("Training LogisticRegression...")
         df = load_parquet(data_splits["train"].path)
         X = df.drop(columns=["target"]).to_numpy()
         y = df["target"].to_numpy()
@@ -97,6 +106,7 @@ class SimplifiedPipeline(FlytePipeline):
         model.fit(X, y)
 
         path = save_model(model, "/tmp/classification/model.joblib")
+        logger.info("Model saved to %s", path)
         return MLModel(path=path, name="logistic_regression", flavor="sklearn")
 
     def evaluate(
@@ -117,6 +127,7 @@ class SimplifiedPipeline(FlytePipeline):
         Returns:
             List of MLMetric with accuracy per split.
         """
+        logger.info("Evaluating model on all splits...")
         clf = load_model(model.path)
         split_enum = {"train": DatasetSplit.TRAIN, "test": DatasetSplit.TEST}
         metrics = []
@@ -125,6 +136,7 @@ class SimplifiedPipeline(FlytePipeline):
             X = df.drop(columns=["target"]).to_numpy()
             y = df["target"].to_numpy()
             acc = float(accuracy_score(y, clf.predict(X)))
+            logger.info("  %s accuracy=%.4f", name, acc)
             metrics.append(
                 MLMetric(name=f"accuracy_{name}", value=acc, data_split=split_enum[name])
             )
