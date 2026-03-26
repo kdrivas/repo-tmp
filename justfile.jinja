@@ -47,6 +47,10 @@ test:
 test-coverage:
   uv run pytest --cov={{SRC}} --cov-fail-under=60
 
+# Run integration tests (execute pipelines locally — slow, not included in check-all)
+test-integration:
+  uv run pytest -m integration -v
+
 # Run linter to check for issues
 lint:
   uv run ruff check

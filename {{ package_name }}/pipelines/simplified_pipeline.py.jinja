@@ -1,7 +1,9 @@
 """Simplified pipeline (ingestion, split, train, evaluate) using LogisticRegression."""
 
+import os
 from typing import Any
 
+from dotenv import load_dotenv
 from mlops_lib.client.mlflow import MLflowContext
 from mlops_lib.core.logging import get_logger
 from mlops_lib.pipelines import (
@@ -21,6 +23,8 @@ from sklearn.metrics import accuracy_score
 
 from {{ package_name }}.data import generate_classification_dataset
 
+load_dotenv()
+
 logger = get_logger(__name__)
 
 
@@ -33,6 +37,13 @@ class SimplifiedPipeline(FlytePipeline):
             container_image="{{ package_name }}:latest",
             experiment_name="dummy-classification",
             run_name="dummy-classification-run",
+
+            # MLflow connection — loaded from .env (see .env.example)
+            mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
+            mlflow_user=os.getenv("MLFLOW_USER"),
+            mlflow_token=os.getenv("MLFLOW_TOKEN"),
+
+            # Pipeline configs
             ingestion_config=IngestionConfig(),
             split_config=SplitConfig(test_size=0.2, val_size=0.0, random_state=42),
             train_config=TrainConfig(),

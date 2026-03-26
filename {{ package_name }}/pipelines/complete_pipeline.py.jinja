@@ -1,7 +1,9 @@
 """Complete pipeline with all steps using LinearRegression."""
 
+import os
 from typing import Any
 
+from dotenv import load_dotenv
 from mlops_lib.client.mlflow import MLflowContext
 from mlops_lib.core.logging import get_logger
 from mlops_lib.pipelines import (
@@ -24,6 +26,8 @@ from sklearn.metrics import mean_squared_error
 
 from {{ package_name }}.data import generate_regression_dataset
 
+load_dotenv()
+
 logger = get_logger(__name__)
 
 
@@ -39,6 +43,13 @@ class CompletePipeline(FlytePipeline):
             container_image="{{ package_name }}:latest",
             experiment_name="dummy-regression",
             run_name="dummy-regression-run",
+
+            # MLflow connection — loaded from .env (see .env.example)
+            mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
+            mlflow_user=os.getenv("MLFLOW_USER"),
+            mlflow_token=os.getenv("MLFLOW_TOKEN"),
+    
+            # Pipeline configs
             ingestion_config=IngestionConfig(),
             preprocess_config=PreprocessConfig(target_column="target"),
             split_config=SplitConfig(test_size=0.2, val_size=0.1, random_state=42),
