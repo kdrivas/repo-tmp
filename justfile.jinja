@@ -25,19 +25,7 @@ reinstall:
 setup-hooks:
   #!/usr/bin/env bash
   set -euo pipefail
-  # Extract unique hook types from .pre-commit-config.yaml and install each
-  hook_types=$(uv run python "{{justfile_directory()}}/scripts/extract_necessary_pre_commit_types.py")
-
-  if [ -z "$hook_types" ]; then
-    echo "No stages defined in hooks, using default pre-commit installation..."
-    uv run pre-commit install
-  else
-    echo "Found hook types: $hook_types"
-    for hook_type in $hook_types; do
-      echo "Installing $hook_type hooks..."
-      uv run pre-commit install --hook-type "$hook_type" || true
-    done
-  fi
+  uv run pre-commit install
 
 # Run tests
 test:
