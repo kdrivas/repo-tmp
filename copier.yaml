@@ -25,17 +25,17 @@ package_name:
 project_description:
   type: str
   help: Short description of the project
-  placeholder: A machine learning pipeline project
+  default: A machine learning pipeline project
 
 author_name:
   type: str
   help: Author full name
-  placeholder: John Doe
+  default: John Doe
 
 author_email:
   type: str
   help: Author email address
-  placeholder: john.doe@example.com
+  default: john.doe@example.com
 
 python_version:
   type: str
