@@ -1,6 +1,18 @@
 _templates_suffix: ".jinja"
 _answers_file: .copier-answers.yml
 
+# Files the user owns — never overwritten on `copier update`
+_skip_if_exists:
+  - "{{ package_name }}/**"
+  - "tests/**"
+  - "pipelines/**"
+  - "pyproject.toml"
+  - "README.md"
+  - ".env.example"
+  - ".python-version"
+  - ".secrets.baseline"
+  - ".copier-answers.yml"
+
 package_name:
   type: str
   help: "Python package name (replaces 'src' — used as directory name and in imports)"
