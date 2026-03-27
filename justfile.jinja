@@ -130,4 +130,14 @@ docker-build-amd64:
     --platform linux/amd64 \
     --tag {{SRC}}:latest \
     .
+
+# Run the Docker image, loading .env if it exists
+docker-run:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  ENV_ARG=""
+  if [ -f .env ]; then
+    ENV_ARG="--env-file .env"
+  fi
+  docker run $ENV_ARG {{SRC}}:latest
 {% endraw %}
