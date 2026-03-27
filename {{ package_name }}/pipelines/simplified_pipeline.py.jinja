@@ -37,12 +37,12 @@ class SimplifiedPipeline(FlytePipeline):
             container_image="{{ package_name }}:latest",
             experiment_name="dummy-classification",
             run_name="dummy-classification-run",
-
+            ################
             # MLflow connection — loaded from .env (see .env.example)
             # mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),  # noqa: ERA001
             # mlflow_user=os.getenv("MLFLOW_USER"),  # noqa: ERA001
             # mlflow_token=os.getenv("MLFLOW_TOKEN"),  # noqa: ERA001
-
+            ################
             # Pipeline configs
             ingestion_config=IngestionConfig(),
             split_config=SplitConfig(test_size=0.2, val_size=0.0, random_state=42),
