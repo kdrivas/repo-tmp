@@ -1,0 +1,65 @@
+# If you make changes to this file, you should run `just setup-hooks` to update the hooks
+repos:
+  # Pre-commit hooks that run via uv installed versions
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff Checker
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: Ruff Formatter
+        entry: uv run ruff format
+        language: system
+        types: [python]
+      - id: detect-secrets
+        name: Detect Secrets
+        entry: uv run detect-secrets-hook --baseline .secrets.baseline
+        language: system
+        types: [text]
+        exclude: >-
+          (?x)^(
+              \.env.*\.example|
+              \.env.*\.sample
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master, --pattern, dev.*]
+      - id: check-added-large-files
+        args: ["--maxkb=5120"]
+      - id: check-json
+        types: [json]
+        exclude: ^\.vscode/.*$ # Ignore .vscode folder which uses JSONC.
+      - id: check-toml
+        types: [toml]
+      - id: check-yaml
+        exclude: ^mkdocs\.yml$ # mkdocs.yml uses special YAML tags that the default parser cannot handle.
+      - id: check-yaml
+        name: check-yaml-unsafe-for-mkdocs
+        files: ^mkdocs\.yml$ # Unsafe only for mkdocs.yml and its custom tags.
+        args: [--unsafe] # Instead of loading the files, simply parse them for syntax. A syntax-only check enables extensions and unsafe constructs which would otherwise be forbidden. Useful for mkdocs.yml.
+
+      # Prevents committing files with names that are invalid on Windows.
+      - id: check-illegal-windows-names
+
+      - id: check-merge-conflict # Prevents committing unresolved merge conflicts.
+
+      # Detects files whose names differ only by capitalization, which may cause issues in case-insensitive filesystems (e.g., foo.py vs Foo.py).
+      - id: check-case-conflict
+
+      # Ensures executable files (chmod +x) have a valid shebang (e.g., #!/usr/bin/env python3).
+      - id: check-executables-have-shebangs
+
+      # Enforces proper test file naming conventions (e.g., test_foo.py vs foo_test.py).
+      - id: name-tests-test
+        args: [--pytest-test-first]
+        files: ^tests/
+        exclude: \.jinja$  # ignore Copier template files
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout

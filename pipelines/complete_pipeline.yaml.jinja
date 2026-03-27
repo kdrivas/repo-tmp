@@ -1,0 +1,36 @@
+pipeline:
+  name: dummy-complete
+  version: v1.0.0
+  module: {{ package_name }}.pipelines.complete_pipeline
+  class: CompletePipeline
+  image:
+    name: {{ package_name }}
+    tag: latest
+  tracking:
+    experiment: dummy-regression
+    run_name: dummy-regression-run
+    tags:
+      env: dev
+  execution:
+    mode: local
+  default_resources:
+    request:
+      cpu: "1"
+      memory: "4Gi"
+    limit:
+      cpu: "1"
+      memory: "4Gi"
+  stages:
+    data_ingestion: {}
+    preprocess:
+      parameters:
+        target_column: target
+    split:
+      parameters:
+        test_size: 0.2
+        val_size: 0.1
+        random_state: 42
+    postprocess: {}
+    model_selection: {}
+    train: {}
+    evaluate: {}

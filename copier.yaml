@@ -1,0 +1,34 @@
+_templates_suffix: ".jinja"
+_answers_file: .copier-answers.yml
+
+package_name:
+  type: str
+  help: "Python package name (replaces 'src' — used as directory name and in imports)"
+  placeholder: my_pipeline
+  validator: >-
+    {% if not (package_name | regex_search('^[a-z][a-z0-9_]*$')) %}
+    Package name must start with a lowercase letter and contain only lowercase letters, digits, and underscores.
+    {% endif %}
+
+project_description:
+  type: str
+  help: Short description of the project
+  placeholder: A machine learning pipeline project
+
+author_name:
+  type: str
+  help: Author full name
+  placeholder: John Doe
+
+author_email:
+  type: str
+  help: Author email address
+  placeholder: john.doe@example.com
+
+python_version:
+  type: str
+  help: Python version to use
+  choices:
+    - "3.12"
+    - "3.13"
+  default: "3.12"

@@ -1,0 +1,54 @@
+[project]
+name = "{{ package_name }}"
+version = "0.1.0"
+description = "{{ project_description }}"
+authors = [{ name = "{{ author_name }}", email = "{{ author_email }}" }]
+readme = "README.md"
+requires-python = "~={{ python_version }}.0"
+dependencies = [
+    "flytekit>=1.16.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.4.0",
+    "joblib>=1.3.0",
+    "python-dotenv>=1.0.0",
+    "mlops-lib==0.7.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+    "docstr-coverage>=2.3.2",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pre-commit>=4.5.1",
+    "detect-secrets>=1.5.0",
+    "memray>=1.19.2",
+    "pyinstrument>=5.1.2",
+]
+cicd = ["basedpyright>=1.38.2"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+name = "mlops-lib"
+url = "https://us-central1-python.pkg.dev/itd-968-np-mlops-observability/mlops-lib/simple/"
+explicit = true
+
+[tool.uv.sources]
+mlops-lib = { index = "mlops-lib" }
+
+[tool.pytest.ini_options]
+# Adding the current directory to the Python path so that pytest can find the modules to test.
+pythonpath = ["."]
+testpaths = ["tests"]
+# asyncio_mode = "auto" automatically detects async test functions and applies the asyncio marker
+asyncio_mode = "auto"
+# asyncio_default_fixture_loop_scope = "function" ensures each test function gets its own event loop
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: runs the full pipeline locally — slow, excluded from the default test run",
+    # Add your custom markers here, e.g. "smoke: quick sanity-check tests"
+]

@@ -1,0 +1,23 @@
+{
+  "typeCheckingMode": "standard",
+  "exclude": [".venv"],
+  "reportMissingTypeStubs": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownParameterType": false,
+  "reportUnknownLambdaType": false,
+  "reportMissingTypeArgument": true,
+  "reportMissingParameterType": true,
+  "reportArgumentType": true,
+  "executionEnvironments": [
+    {
+      "root": "notebooks",
+      "reportUnusedExpression": false
+    },
+    {
+      "root": ".",
+      "reportUnusedExpression": true
+    }
+  ]
+}

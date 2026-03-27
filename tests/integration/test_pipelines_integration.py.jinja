@@ -1,0 +1,21 @@
+"""Integration tests — execute pipelines end-to-end in local mode."""
+
+import pytest
+from mlops_lib.pipelines.flyte.runner import FlyteRunner
+
+from {{ package_name }}.pipelines.complete_pipeline import complete_pipeline
+from {{ package_name }}.pipelines.simplified_pipeline import simplified_pipeline
+
+
+@pytest.mark.integration
+def test_complete_pipeline_runs() -> None:
+    """CompletePipeline executes all steps without errors in local mode."""
+    runner = FlyteRunner(mode="local")
+    runner.run(complete_pipeline, version="v0.0.0-test")
+
+
+@pytest.mark.integration
+def test_simplified_pipeline_runs() -> None:
+    """SimplifiedPipeline executes all steps without errors in local mode."""
+    runner = FlyteRunner(mode="local")
+    runner.run(simplified_pipeline, version="v0.0.0-test")
