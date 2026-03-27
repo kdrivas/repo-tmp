@@ -19,6 +19,12 @@ else
   echo "just already installed: $(just --version)"
 fi
 
+# Verify gcloud authentication
+if ! gcloud auth print-access-token &>/dev/null; then
+  echo "Error: not authenticated with gcloud. Run 'gcloud auth login' and try again."
+  exit 1
+fi
+
 # Run project install
 just install
 
