@@ -61,7 +61,8 @@ class CompletePipeline(FlytePipeline):
             logger.info("MLflow tracking URI: %s", mlflow_uri)
         else:
             logger.warning(
-                "MLflow connection not configured — set MLFLOW_TRACKING_URI in .env to enable tracking"
+                "MLflow connection not configured — "
+                "set MLFLOW_TRACKING_URI in .env to enable tracking"
             )
 
     def ingestion(self, _config: IngestionConfig) -> MLDataset:
