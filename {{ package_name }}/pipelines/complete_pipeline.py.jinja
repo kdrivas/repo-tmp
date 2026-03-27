@@ -45,10 +45,10 @@ class CompletePipeline(FlytePipeline):
             run_name="dummy-regression-run",
 
             # MLflow connection — loaded from .env (see .env.example)
-            # mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
-            # mlflow_user=os.getenv("MLFLOW_USER"),
-            # mlflow_token=os.getenv("MLFLOW_TOKEN"),
-    
+            # mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),  # noqa: ERA001
+            # mlflow_user=os.getenv("MLFLOW_USER"),  # noqa: ERA001
+            # mlflow_token=os.getenv("MLFLOW_TOKEN"),  # noqa: ERA001
+
             # Pipeline configs
             ingestion_config=IngestionConfig(),
             preprocess_config=PreprocessConfig(target_column="target"),
@@ -57,10 +57,12 @@ class CompletePipeline(FlytePipeline):
             train_config=TrainConfig(),
             eval_config=EvalConfig(),
         )
-        if os.getenv("MLFLOW_TRACKING_URI"):
-            logger.info("MLflow tracking URI: %s", os.getenv("MLFLOW_TRACKING_URI"))
+        if mlflow_uri := os.getenv("MLFLOW_TRACKING_URI"):
+            logger.info("MLflow tracking URI: %s", mlflow_uri)
         else:
-            logger.warning("MLflow connection not configured — set MLFLOW_TRACKING_URI in .env to enable tracking")
+            logger.warning(
+                "MLflow connection not configured — set MLFLOW_TRACKING_URI in .env to enable tracking"
+            )
 
     def ingestion(self, _config: IngestionConfig) -> MLDataset:
         """Generate a synthetic regression dataset and persist it.
