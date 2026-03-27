@@ -2,6 +2,18 @@
 
 {{ project_description }}
 
+## Getting started
+
+1. Create an empty repository on GitHub and clone it locally:
+   ```bash
+   git clone <your-repo-url>
+   cd <your-repo-name>
+   ```
+2. Scaffold the project from this template:
+   ```bash
+   copier copy gh:kdrivas/repo-tmp .
+   ```
+
 ## Requirements
 
 - Python {{ python_version }}
@@ -64,6 +76,19 @@ Mode options: `local` (default), `remote`.
 just pipeline-run pipelines/complete_pipeline.yaml remote
 ```
 
+### Build and run the Docker image
+
+```bash
+just docker-build      # Build the image (required before running pipelines remotely)
+just docker-run        # Run the container, loading .env if it exists
+```
+
+For linux/amd64 (e.g. GCP deployment):
+
+```bash
+just docker-build-amd64
+```
+
 ### Other commands
 
 ```bash
@@ -74,7 +99,6 @@ just lint              # Check linting
 just lint-fix          # Auto-fix lint issues
 just format            # Format code
 just check-all         # Run all quality checks
-just docker-build      # Build Docker image
 ```
 
 ## Project structure
@@ -110,11 +134,15 @@ just docker-build      # Build Docker image
    ```bash
    uv run python -m {{ package_name }}.pipelines.my_pipeline
    ```
-3. Once the pipeline is ready, generate its YAML config:
+3. Once the pipeline is ready, build the Docker image — pipelines reference it at runtime:
+   ```bash
+   just docker-build
+   ```
+4. Generate its YAML config:
    ```bash
    just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
    ```
-4. Run it via the YAML config:
+5. Run it via the YAML config:
    ```bash
    just pipeline-run pipelines/my_pipeline.yaml
    ```
