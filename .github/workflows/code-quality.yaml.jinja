@@ -52,11 +52,11 @@ jobs:
       - name: Fail job if any check failed
         id: collect_result
         run: |
-          # Parse the JSON array of step IDs
+          {% raw %}# Parse the JSON array of step IDs
           check_steps=$(echo "$CHECK_STEPS" | jq -r '.[]')
 
           # Use toJson and jq because we can't access the steps array by an id stored in a variable.
-          steps_json='{% raw %}${{ toJson(steps) }}{% endraw %}'
+          steps_json='${{ toJson(steps) }}'
 
           failed_checks=()
           for step in $check_steps; do
@@ -75,4 +75,4 @@ jobs:
           else
             echo "All steps passed."
             exit 0
-          fi
+          fi{% endraw %}
