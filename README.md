@@ -56,6 +56,16 @@ just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pi
 just pipeline-run pipelines/complete_pipeline.yaml
 ```
 
+To run it on Cloud Run Jobs:
+
+```bash
+# 1. Build the image, push to Artifact Registry, and create/update the job (once per image change)
+just cloud-deploy project_id=<your-gcp-project-id>
+
+# 2. Execute the pipeline
+just cloud-run pipelines/complete_pipeline.yaml project_id=<your-gcp-project-id>
+```
+
 ## Adding a new pipeline
 
 1. Create `{{ package_name }}/pipelines/my_pipeline.py` implementing `FlytePipeline`.
@@ -102,6 +112,8 @@ just check-all           # Run all quality checks
 just docker-build        # Build the Docker image
 just docker-build-amd64  # Build for linux/amd64 (GCP deployment)
 just docker-run          # Run the container (loads .env if present)
+just cloud-deploy        # Build, push to GAR, and create/update the Cloud Run Job
+just cloud-run           # Execute a pipeline on Cloud Run Jobs (default: complete_pipeline.yaml)
 ```
 
 ### Automations

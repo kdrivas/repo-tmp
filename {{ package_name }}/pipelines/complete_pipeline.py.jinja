@@ -4,8 +4,8 @@ import os
 from typing import Any
 
 from dotenv import load_dotenv
-from mlops_lib.client.mlflow import MLflowContext
 from mlops_lib.core.logging import get_logger
+from mlops_lib.experiment_tracker.mlflow import MLflowRun
 from mlops_lib.pipelines import (
     EvalConfig,
     IngestionConfig,
@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 
 
 class CompletePipeline(FlytePipeline):
-    """Example ML pipeline — Use this as a reference.
+    """Example ML pipeline — replace this with your own logic.
 
     Required stages (must be implemented):
         ingestion, split, train, evaluate
@@ -79,7 +79,7 @@ class CompletePipeline(FlytePipeline):
                 "set MLFLOW_TRACKING_URI in .env to enable tracking"
             )
 
-    def ingestion(self, _config: IngestionConfig) -> MLDataset:
+    def ingestion(self, _config: IngestionConfig, _mlflow_run: MLflowRun | None) -> MLDataset:
         """Generate a synthetic regression dataset and persist it.
 
         Returns:
@@ -91,7 +91,9 @@ class CompletePipeline(FlytePipeline):
         logger.info("Ingestion complete: %d rows saved to %s", len(df), path)
         return MLDataset(path=path)
 
-    def preprocess(self, data: MLDataset, config: PreprocessConfig) -> MLDataset:
+    def preprocess(
+        self, data: MLDataset, config: PreprocessConfig, _mlflow_run: MLflowRun | None
+    ) -> MLDataset:
         """Apply z-score normalization to all feature columns.
 
         Args:
@@ -109,7 +111,9 @@ class CompletePipeline(FlytePipeline):
         logger.info("Preprocessing complete: %d features normalized", len(feature_cols))
         return MLDataset(path=path)
 
-    def split(self, data: MLDataset, config: SplitConfig) -> dict[str, MLDataset]:
+    def split(
+        self, data: MLDataset, config: SplitConfig, mlflow_run: MLflowRun | None
+    ) -> dict[str, MLDataset]:
         """Split the dataset into train, val, and test sets.
 
         Args:
@@ -133,17 +137,21 @@ class CompletePipeline(FlytePipeline):
         n_test = int(n * config.test_size)
         n_val = int(n * config.val_size)
 
+        df_train = df.iloc[n_test + n_val :]
+        df_val = df.iloc[n_test : n_test + n_val]
+        df_test = df.iloc[:n_test]
+
         splits = {
             "train": MLDataset(
-                path=save_parquet(df.iloc[n_test + n_val :], "/tmp/regression/train.parquet"),
+                path=save_parquet(df_train, "/tmp/regression/train.parquet"),
                 data_split=DatasetSplit.TRAIN,
             ),
             "val": MLDataset(
-                path=save_parquet(df.iloc[n_test : n_test + n_val], "/tmp/regression/val.parquet"),
+                path=save_parquet(df_val, "/tmp/regression/val.parquet"),
                 data_split=DatasetSplit.VAL,
             ),
             "test": MLDataset(
-                path=save_parquet(df.iloc[:n_test], "/tmp/regression/test.parquet"),
+                path=save_parquet(df_test, "/tmp/regression/test.parquet"),
                 data_split=DatasetSplit.TEST,
             ),
         }
@@ -153,10 +161,21 @@ class CompletePipeline(FlytePipeline):
             n_val,
             n_test,
         )
+
+        # If you want to log dataset metadata (size, features, quality metrics) to MLflow,
+        # call mlflow_run.log_data() with each split.
+        if mlflow_run is not None:
+            with mlflow_run:
+                mlflow_run.log_data(df_train, name="train", target_column="target")
+                mlflow_run.log_data(df_val, name="val", target_column="target")
+                mlflow_run.log_data(df_test, name="test", target_column="target")
         return splits
 
     def postprocess(
-        self, data_splits: dict[str, MLDataset], _config: PostprocessConfig
+        self,
+        data_splits: dict[str, MLDataset],
+        _config: PostprocessConfig,
+        _mlflow_run: MLflowRun | None,
     ) -> dict[str, MLDataset]:
         """Pass-through step — no additional postprocessing needed.
 
@@ -173,7 +192,7 @@ class CompletePipeline(FlytePipeline):
         self,
         data_splits: dict[str, MLDataset],
         _config: ModelSelectionConfig,
-        _mlflow_context: MLflowContext,
+        _mlflow_run: MLflowRun | None,
     ) -> dict[str, Any]:
         """Select the best ``fit_intercept`` flag using the validation set.
 
@@ -212,7 +231,7 @@ class CompletePipeline(FlytePipeline):
         data_splits: dict[str, MLDataset],
         ml_best_parameters: dict[str, Any],
         _config: TrainConfig,
-        mlflow_context: MLflowContext,
+        mlflow_run: MLflowRun | None,
     ) -> MLModel:
         """Fit a linear regression model using the best hyperparameters.
 
@@ -232,14 +251,10 @@ class CompletePipeline(FlytePipeline):
         model = LinearRegression(**params)
         model.fit(X, y)
 
-        # Log params to MLflow when a run is active.
-        # First check that MLflow is configured (tracking URI set in .env),
-        # then use self._get_mlflow_run(mlflow_context) to retrieve the active run.
-        # You can log params, metrics, or tags this way.
-        if mlflow_context.mlflow_tracking_uri:
-            run = self._get_mlflow_run(mlflow_context)
-            with run:
-                run.log_params(params)
+        # If you want to log params, metrics, or tags to MLflow, use mlflow_run here.
+        if mlflow_run is not None:
+            with mlflow_run:
+                mlflow_run.log_params(params)
 
         path = save_model(model, "/tmp/regression/model.joblib")
         logger.info("Model saved to %s", path)
@@ -250,7 +265,7 @@ class CompletePipeline(FlytePipeline):
         data_splits: dict[str, MLDataset],
         model: MLModel,
         _config: EvalConfig,
-        _mlflow_context: MLflowContext,
+        _mlflow_run: MLflowRun | None,
     ) -> list[MLMetric]:
         """Compute MSE on train, val, and test splits.
 

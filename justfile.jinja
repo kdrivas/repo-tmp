@@ -128,4 +128,39 @@ docker-run:
     ENV_ARG="--env-file .env"
   fi
   docker run $ENV_ARG {{SRC}}:latest
+
+# Build and deploy the Docker image to Cloud Run Jobs
+# Usage: just cloud-deploy [project_id] [region] [job_name] [image_name] [gar_repo]
+cloud-deploy \
+  project_id="" \
+  region="us-central1" \
+  job_name="{{SRC}}-pipeline" \
+  image_name="{{SRC}}" \
+  gar_repo="{{SRC}}":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  GCP_PROJECT_ID="{{project_id}}" \
+  GCP_REGION="{{region}}" \
+  JOB_NAME="{{job_name}}" \
+  IMAGE_NAME="{{image_name}}" \
+  ARTIFACT_REGISTRY_REPO="{{gar_repo}}" \
+  ./scripts/deploy_cloud_run.sh
+
+# Run a pipeline on Cloud Run Jobs
+# Usage: just cloud-run [file] [project_id] [region] [job_name] [image_name] [gar_repo]
+cloud-run \
+  file="pipelines/complete_pipeline.yaml" \
+  project_id="" \
+  region="us-central1" \
+  job_name="{{SRC}}-pipeline" \
+  image_name="{{SRC}}" \
+  gar_repo="{{SRC}}":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  GCP_PROJECT_ID="{{project_id}}" \
+  GCP_REGION="{{region}}" \
+  JOB_NAME="{{job_name}}" \
+  IMAGE_NAME="{{image_name}}" \
+  ARTIFACT_REGISTRY_REPO="{{gar_repo}}" \
+  ./scripts/run_pipeline_cloud_run.sh {{file}}
 {% endraw %}
