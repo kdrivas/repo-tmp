@@ -1,9 +1,11 @@
-# Repo Template
+# {{ package_name }}
+
+{{ project_description }}
 
 ## Requirements
 
-- Python 3.12 | 3.13
-- [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated
+- Python {{ python_version }}
+- [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) — authenticated via `gcloud auth login`
 
 ## Getting started
 
@@ -12,44 +14,107 @@
    git clone <your-repo-url>
    cd <your-repo-name>
    ```
-2. Install [Copier](https://copier.readthedocs.io/en/stable/) if you don't have it (requires Python 3.10+):
+2. Install [Copier](https://copier.readthedocs.io/en/stable/) if you don't have it:
    ```bash
    pip install copier
    ```
 3. Scaffold the project from this template:
    ```bash
-   copier copy gh:paccar/repo-tmp .
+   copier copy gh:kdrivas/repo-tmp .
    ```
 4. Authenticate with Google Cloud:
    ```bash
    gcloud auth login
    gcloud auth application-default login
    ```
-5. Install dependencies:
+5. Install `uv` and `just`:
    ```bash
    bash scripts/install_tools.sh
+   ```
+6. Install project dependencies:
+   ```bash
    just install
    ```
-6. Set up pre-commit hooks:
+7. Set up pre-commit hooks:
    ```bash
    just setup-hooks
    ```
-7. Initialize the secrets baseline:
+8. Initialize the secrets baseline:
    ```bash
    uv run detect-secrets scan > .secrets.baseline
    ```
 
-## Usage
+## Pipelines
 
-A pipeline is a sequence of ordered steps that transforms raw data into a trained and evaluated ML model.
+This project uses [Flyte](https://flyte.org/) and [`mlops-lib`](https://github.com/paccar/aacoe-mlops-observability-lib/) to define and run ML pipelines.
 
-This template provides one example ML pipeline built on [Flyte](https://flyte.org/) and [`mlops-lib`](https://github.com/paccar/aacoe-mlops-observability-lib/):
+The included example is `CompletePipeline` — a full regression workflow: ingestion → preprocess → split → postprocess → model selection → train → evaluate. Use it as a starting point and replace it with your own logic.
 
-- **`CompletePipeline`** — full regression workflow: ingestion → preprocess → split → postprocess → model selection → train → evaluate.
+To run it locally:
 
-Use it as a starting point and replace it with your own pipeline logic.
+```bash
+just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline
+just pipeline-run pipelines/complete_pipeline.yaml
+```
 
-The template also includes the following automations out of the box:
+For remote execution (requires a running Flyte cluster):
+
+```bash
+just docker-build
+just pipeline-run pipelines/complete_pipeline.yaml remote
+```
+
+## Adding a new pipeline
+
+1. Create `{{ package_name }}/pipelines/my_pipeline.py` implementing `FlytePipeline`.
+2. Iterate by running it directly — recommended during development since it skips YAML generation:
+   ```bash
+   uv run python -m {{ package_name }}.pipelines.my_pipeline
+   ```
+3. Once ready, build the Docker image (referenced by pipelines at runtime):
+   ```bash
+   just docker-build
+   ```
+4. Generate its YAML config:
+   ```bash
+   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
+   ```
+5. Run it:
+   ```bash
+   just pipeline-run pipelines/my_pipeline.yaml
+   ```
+
+## Keeping your project up to date
+
+```bash
+git add . && git commit -m "chore: sync before template update"
+copier update
+```
+
+Copier applies template changes while preserving your source code, tests, and pipeline configs. Conflicts are resolved interactively.
+
+> Your setup answers are stored in `.copier-answers.yml` — Copier uses this to track the template version.
+
+## Reference
+
+### Commands
+
+```bash
+just install             # Install project dependencies
+just test                # Run tests
+just test-coverage       # Run tests with coverage report (≥ 60 %)
+just lint                # Check linting
+just lint-fix            # Auto-fix lint issues
+just format              # Format code
+just check-all           # Run all quality checks
+just docker-build        # Build the Docker image
+just docker-build-amd64  # Build for linux/amd64 (GCP deployment)
+just docker-run          # Run the container (loads .env if present)
+```
+
+### Automations
+
+The following checks run automatically via pre-commit hooks and CI:
 
 | Automation | Tool | Trigger |
 |---|---|---|
@@ -61,79 +126,7 @@ The template also includes the following automations out of the box:
 | Notebook output stripping | nbstripout | pre-commit |
 | PR style validation | GitHub Actions | on PR open/edit |
 
-### Generate a pipeline YAML config
-
-```bash
-just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline
-# → generates pipelines/complete_pipeline.yaml
-```
-
-### Run a pipeline
-
-```bash
-just pipeline-run pipelines/complete_pipeline.yaml          # local (default)
-just pipeline-run pipelines/complete_pipeline.yaml remote   # remote (requires a running Flyte cluster)
-```
-
-### Build and run the Docker image
-
-```bash
-just docker-build      # Build the image (required before running pipelines remotely)
-just docker-run        # Run the container, loading .env if it exists
-```
-
-For linux/amd64 (e.g. GCP deployment):
-
-```bash
-just docker-build-amd64
-```
-
-### Other commands
-
-```bash
-just install           # Install project dependencies
-just test              # Run tests
-just test-coverage     # Run tests with coverage report
-just lint              # Check linting
-just lint-fix          # Auto-fix lint issues
-just format            # Format code
-just check-all         # Run all quality checks
-```
-
-## Adding a new pipeline
-
-1. Create `{{ package_name }}/pipelines/my_pipeline.py` implementing `FlytePipeline`.
-2. Iterate on the pipeline by running it directly with `uv run python`. This is recommended during development since it skips YAML generation and lets you test quickly before the file is finalized:
-   ```bash
-   uv run python -m {{ package_name }}.pipelines.my_pipeline
-   ```
-3. Once the pipeline is ready, build the Docker image — pipelines reference it at runtime:
-   ```bash
-   just docker-build
-   ```
-4. Generate its YAML config:
-   ```bash
-   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
-   ```
-5. Run it via the YAML config:
-   ```bash
-   just pipeline-run pipelines/my_pipeline.yaml
-   ```
-
-## Keeping your project up to date
-
-When the template is updated with new features, bug fixes, or tooling improvements, you can pull those changes into your project:
-
-```bash
-git add . && git commit -m "chore: sync before template update"
-copier update
-```
-
-Copier will apply template changes while preserving files that belong to you (source code, tests, pipeline configs). If there are conflicts, it will prompt you to resolve them.
-
-> Your answers from the initial setup are stored in `.copier-answers.yml` — Copier uses this to remember which template and version you used.
-
-## Project structure
+### Project structure
 
 ```
 .
