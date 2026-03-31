@@ -51,15 +51,9 @@ The included example is `CompletePipeline` — a full regression workflow: inges
 To run it locally:
 
 ```bash
+just docker-build
 just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline
 just pipeline-run pipelines/complete_pipeline.yaml
-```
-
-For remote execution (requires a running Flyte cluster):
-
-```bash
-just docker-build
-just pipeline-run pipelines/complete_pipeline.yaml remote
 ```
 
 ## Adding a new pipeline
