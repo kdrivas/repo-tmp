@@ -32,30 +32,44 @@ logger = get_logger(__name__)
 
 
 class CompletePipeline(FlytePipeline):
-    """Complete pipeline with all steps.
+    """Example ML pipeline — replace this with your own logic.
 
-    Steps: ingestion, preprocess, split, postprocess, model_selection, train, and evaluate.
+    Required stages (must be implemented):
+        ingestion, split, train, evaluate
+
+    Optional stages (implement only if needed):
+        preprocess, postprocess, model_selection
+
+    To create your own pipeline:
+        1. Rename this class and the instance at the bottom of the file.
+        2. Customize your parameters and call ``super().__init__()`` with them.
+        3. Implement the required stages with your data and model logic.
+        4. Remove or adapt the optional stages as needed.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        name: str,
+        experiment_name: str,
+        run_name: str,
+    ) -> None:
         super().__init__(
-            name="dummy_complete",
+            name=name,
             container_image="{{ package_name }}:latest",
-            experiment_name="dummy-regression",
-            run_name="dummy-regression-run",
-            ################
-            # MLflow connection — loaded from .env (see .env.example)
+            experiment_name=experiment_name,
+            run_name=run_name,
+            # MLflow — uncomment and set values in .env (see .env.example)
             # mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),  # noqa: ERA001
             # mlflow_user=os.getenv("MLFLOW_USER"),  # noqa: ERA001
             # mlflow_token=os.getenv("MLFLOW_TOKEN"),  # noqa: ERA001
-            ################
-            # Pipeline configs
+            # Required
             ingestion_config=IngestionConfig(),
-            preprocess_config=PreprocessConfig(target_column="target"),
             split_config=SplitConfig(test_size=0.2, val_size=0.1, random_state=42),
-            model_selection_config=ModelSelectionConfig(),
             train_config=TrainConfig(),
             eval_config=EvalConfig(),
+            # Optional — remove if not using the corresponding stage
+            preprocess_config=PreprocessConfig(target_column="target"),
+            model_selection_config=ModelSelectionConfig(),
         )
         if mlflow_uri := os.getenv("MLFLOW_TRACKING_URI"):
             logger.info("MLflow tracking URI: %s", mlflow_uri)
@@ -198,7 +212,7 @@ class CompletePipeline(FlytePipeline):
         data_splits: dict[str, MLDataset],
         ml_best_parameters: dict[str, Any],
         _config: TrainConfig,
-        _mlflow_context: MLflowContext,
+        mlflow_context: MLflowContext,
     ) -> MLModel:
         """Fit a linear regression model using the best hyperparameters.
 
@@ -217,6 +231,15 @@ class CompletePipeline(FlytePipeline):
 
         model = LinearRegression(**params)
         model.fit(X, y)
+
+        # Log params to MLflow when a run is active.
+        # First check that MLflow is configured (tracking URI set in .env),
+        # then use self._get_mlflow_run(mlflow_context) to retrieve the active run.
+        # You can log params, metrics, or tags this way.
+        if mlflow_context.mlflow_tracking_uri:
+            run = self._get_mlflow_run(mlflow_context)
+            with run:
+                run.log_params(params)
 
         path = save_model(model, "/tmp/regression/model.joblib")
         logger.info("Model saved to %s", path)
@@ -256,4 +279,10 @@ class CompletePipeline(FlytePipeline):
         return metrics
 
 
-complete_pipeline = CompletePipeline()
+# IMPORTANT: The pipeline must be instantiated at module level so that Flyte can
+# discover and serialize it. Update the parameters below to match your project.
+complete_pipeline = CompletePipeline(
+    name="dummy_complete",
+    experiment_name="dummy-regression",
+    run_name="dummy-regression-run",
+)

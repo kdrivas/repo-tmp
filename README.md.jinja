@@ -4,14 +4,18 @@
 
 ## Getting started
 
-1. Create an empty repository on GitHub and clone it locally:
+1. Install [Copier](https://copier.readthedocs.io/en/stable/) if you don't have it (requires Python 3.10+):
+   ```bash
+   pip install copier
+   ```
+2. Create an empty repository on GitHub and clone it locally:
    ```bash
    git clone <your-repo-url>
    cd <your-repo-name>
    ```
-2. Scaffold the project from this template:
+3. Scaffold the project from this template:
    ```bash
-   copier copy gh:kdrivas/repo-tmp .
+   copier copy gh:paccar/repo-tmp .
    ```
 
 ## Requirements
@@ -38,12 +42,11 @@ This installs `uv` and `just` if not already present, then runs `just install`, 
 
 A pipeline is a sequence of ordered steps that transforms raw data into a trained and evaluated ML model.
 
-This template provides two example ML pipelines built on [Flyte](https://flyte.org/) and [`mlops-lib`](https://github.com/paccar/aacoe-mlops-observability-lib/):
+This template provides one example ML pipeline built on [Flyte](https://flyte.org/) and [`mlops-lib`](https://github.com/paccar/aacoe-mlops-observability-lib/):
 
 - **`CompletePipeline`** — full regression workflow: ingestion → preprocess → split → postprocess → model selection → train → evaluate.
-- **`SimplifiedPipeline`** — minimal classification workflow: ingestion → split → train → evaluate.
 
-Use these as starting points and replace them with your own pipeline logic.
+Use it as a starting point and replace it with your own pipeline logic.
 
 The template also includes the following automations out of the box:
 
@@ -64,16 +67,11 @@ just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pi
 # → generates pipelines/complete_pipeline.yaml
 ```
 
-### Run a pipeline locally
+### Run a pipeline
 
 ```bash
-just pipeline-run pipelines/complete_pipeline.yaml
-```
-
-Mode options: `local` (default), `remote`.
-
-```bash
-just pipeline-run pipelines/complete_pipeline.yaml remote
+just pipeline-run pipelines/complete_pipeline.yaml          # local (default)
+just pipeline-run pipelines/complete_pipeline.yaml remote   # remote (requires a running Flyte cluster)
 ```
 
 ### Build and run the Docker image
@@ -107,13 +105,11 @@ just check-all         # Run all quality checks
 .
 ├── {{ package_name }}/             # Main source package
 │   ├── pipelines/                  # Pipeline definitions (one file per pipeline)
-│   │   ├── complete_pipeline.py
-│   │   └── simplified_pipeline.py
+│   │   └── complete_pipeline.py
 │   └── data.py                     # Dataset generation utilities
 │
 ├── pipelines/                      # Generated YAML configs for each pipeline
-│   ├── complete_pipeline.yaml
-│   └── simplified_pipeline.yaml
+│   └── complete_pipeline.yaml
 │
 ├── tests/                          # Unit and integration tests
 ├── notebooks/                      # Exploratory notebooks
@@ -126,6 +122,19 @@ just check-all         # Run all quality checks
 ├── ruff.toml                       # Linter/formatter configuration
 └── pyrightconfig.json              # Type checker configuration
 ```
+
+## Keeping your project up to date
+
+When the template is updated with new features, bug fixes, or tooling improvements, you can pull those changes into your project:
+
+```bash
+git add . && git commit -m "chore: sync before template update"
+copier update
+```
+
+Copier will apply template changes while preserving files that belong to you (source code, tests, pipeline configs). If there are conflicts, it will prompt you to resolve them.
+
+> Your answers from the initial setup are stored in `.copier-answers.yml` — Copier uses this to remember which template and version you used.
 
 ## Adding a new pipeline
 
