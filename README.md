@@ -1,10 +1,8 @@
-# {{ package_name }}
-
-{{ project_description }}
+# Repo Template
 
 ## Requirements
 
-- Python {{ python_version }}
+- Python 3.12 | 3.13
 - [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated
 
 ## Getting started
