@@ -1,6 +1,4 @@
-# {{ package_name }}
-
-{{ project_description }}
+# Repo template
 
 ## Requirements
 
@@ -116,15 +114,15 @@ just docker-run          # Run the container (loads .env if present)
 
 The following checks run automatically via pre-commit hooks and CI:
 
-| Automation | Tool | Trigger |
-|---|---|---|
-| Linting & formatting | Ruff | pre-commit + CI |
-| Type checking | Basedpyright | pre-commit + CI |
+| Automation                  | Tool            | Trigger         |
+| --------------------------- | --------------- | --------------- |
+| Linting & formatting        | Ruff            | pre-commit + CI |
+| Type checking               | Basedpyright    | pre-commit + CI |
 | Docstring coverage (≥ 80 %) | docstr-coverage | pre-commit + CI |
-| Test coverage (≥ 60 %) | pytest-cov | pre-commit + CI |
-| Secret scanning | detect-secrets | pre-commit |
-| Notebook output stripping | nbstripout | pre-commit |
-| PR style validation | GitHub Actions | on PR open/edit |
+| Test coverage (≥ 60 %)      | pytest-cov      | pre-commit + CI |
+| Secret scanning             | detect-secrets  | pre-commit      |
+| Notebook output stripping   | nbstripout      | pre-commit      |
+| PR style validation         | GitHub Actions  | on PR open/edit |
 
 ### Project structure
 
