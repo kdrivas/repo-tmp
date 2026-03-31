@@ -2,6 +2,11 @@
 
 {{ project_description }}
 
+## Requirements
+
+- Python {{ python_version }}
+- [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated
+
 ## Getting started
 
 1. Create an empty repository on GitHub and clone it locally:
@@ -17,26 +22,24 @@
    ```bash
    copier copy gh:paccar/repo-tmp .
    ```
-
-## Requirements
-
-- Python {{ python_version }}
-- [`gcloud` CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated:
-
-  ```bash
-  gcloud auth login                    # authenticates your user account
-  gcloud auth application-default login  # sets credentials for local tools (uv, Docker)
-  ```
-
-## Installation
-
-**1. Run the bootstrap script:**
-
-```bash
-bash scripts/install_dependencies.sh
-```
-
-This installs `uv` and `just` if not already present, then runs `just install`, `just setup-hooks`, and initializes the `detect-secrets` baseline. The script removes itself when done.
+4. Authenticate with Google Cloud:
+   ```bash
+   gcloud auth login
+   gcloud auth application-default login
+   ```
+5. Install dependencies:
+   ```bash
+   bash scripts/install_dependencies.sh
+   just install
+   ```
+6. Set up pre-commit hooks:
+   ```bash
+   just setup-hooks
+   ```
+7. Initialize the secrets baseline:
+   ```bash
+   uv run detect-secrets scan > .secrets.baseline
+   ```
 
 ## Usage
 
@@ -99,6 +102,39 @@ just format            # Format code
 just check-all         # Run all quality checks
 ```
 
+## Adding a new pipeline
+
+1. Create `{{ package_name }}/pipelines/my_pipeline.py` implementing `FlytePipeline`.
+2. Iterate on the pipeline by running it directly with `uv run python`. This is recommended during development since it skips YAML generation and lets you test quickly before the file is finalized:
+   ```bash
+   uv run python -m {{ package_name }}.pipelines.my_pipeline
+   ```
+3. Once the pipeline is ready, build the Docker image — pipelines reference it at runtime:
+   ```bash
+   just docker-build
+   ```
+4. Generate its YAML config:
+   ```bash
+   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
+   ```
+5. Run it via the YAML config:
+   ```bash
+   just pipeline-run pipelines/my_pipeline.yaml
+   ```
+
+## Keeping your project up to date
+
+When the template is updated with new features, bug fixes, or tooling improvements, you can pull those changes into your project:
+
+```bash
+git add . && git commit -m "chore: sync before template update"
+copier update
+```
+
+Copier will apply template changes while preserving files that belong to you (source code, tests, pipeline configs). If there are conflicts, it will prompt you to resolve them.
+
+> Your answers from the initial setup are stored in `.copier-answers.yml` — Copier uses this to remember which template and version you used.
+
 ## Project structure
 
 ```
@@ -122,36 +158,3 @@ just check-all         # Run all quality checks
 ├── ruff.toml                       # Linter/formatter configuration
 └── pyrightconfig.json              # Type checker configuration
 ```
-
-## Keeping your project up to date
-
-When the template is updated with new features, bug fixes, or tooling improvements, you can pull those changes into your project:
-
-```bash
-git add . && git commit -m "chore: sync before template update"
-copier update
-```
-
-Copier will apply template changes while preserving files that belong to you (source code, tests, pipeline configs). If there are conflicts, it will prompt you to resolve them.
-
-> Your answers from the initial setup are stored in `.copier-answers.yml` — Copier uses this to remember which template and version you used.
-
-## Adding a new pipeline
-
-1. Create `{{ package_name }}/pipelines/my_pipeline.py` implementing `FlytePipeline`.
-2. Iterate on the pipeline by running it directly with `uv run python`. This is recommended during development since it skips YAML generation and lets you test quickly before the file is finalized:
-   ```bash
-   uv run python -m {{ package_name }}.pipelines.my_pipeline
-   ```
-3. Once the pipeline is ready, build the Docker image — pipelines reference it at runtime:
-   ```bash
-   just docker-build
-   ```
-4. Generate its YAML config:
-   ```bash
-   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
-   ```
-5. Run it via the YAML config:
-   ```bash
-   just pipeline-run pipelines/my_pipeline.yaml
-   ```
