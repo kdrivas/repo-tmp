@@ -60,10 +60,21 @@ To run it on Cloud Run Jobs:
 
 ```bash
 # 1. Build the image, push to Artifact Registry, and create/update the job (once per image change)
-just cloud-deploy project_id=<your-gcp-project-id>
+# Note: Cloud Run job names do not allow underscores — use hyphens instead (e.g. my-package-pipeline)
+GCP_PROJECT_ID="<your-gcp-project-id>" \
+GCP_REGION="us-central1" \
+JOB_NAME="{{ package_name }}-pipeline" \
+IMAGE_NAME="{{ package_name }}" \
+ARTIFACT_REGISTRY_REPO="<your-artifact-repo>" \
+bash scripts/deploy_cloud_run.sh
 
 # 2. Execute the pipeline
-just cloud-run pipelines/complete_pipeline.yaml project_id=<your-gcp-project-id>
+GCP_PROJECT_ID="<your-gcp-project-id>" \
+GCP_REGION="us-central1" \
+JOB_NAME="{{ package_name }}-pipeline" \
+IMAGE_NAME="{{ package_name }}" \
+ARTIFACT_REGISTRY_REPO="<your-artifact-repo>" \
+bash scripts/run_pipeline_cloud_run.sh pipelines/complete_pipeline.yaml
 ```
 
 ## Adding a new pipeline
