@@ -119,6 +119,7 @@ class CompletePipeline(FlytePipeline):
         Args:
             data: Preprocessed MLDataset as returned by :meth:`preprocess`.
             config: Split configuration with ``test_size``, ``val_size``, and ``random_state``.
+            mlflow_run: Mlflow active run.
 
         Returns:
             Dict with ``train``, ``val``, and ``test`` MLDataset entries.
@@ -238,6 +239,7 @@ class CompletePipeline(FlytePipeline):
         Args:
             data_splits: Dict of MLDatasets as returned by :meth:`postprocess`.
             ml_best_parameters: Best parameters from :meth:`model_selection`.
+            mlflow_run: MLflow active run.
 
         Returns:
             MLModel pointing to the saved model artifact.
