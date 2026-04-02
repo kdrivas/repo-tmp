@@ -1,8 +1,15 @@
 #!/bin/bash
 
-# Cloud Run Jobs Deployment Script
-# Builds the Docker image, pushes it to Artifact Registry, and creates/updates the Cloud Run Job.
-# Usage: ./scripts/deploy_cloud_run.sh
+# Docker Build & Push Script
+# Builds the Docker image and pushes it to Artifact Registry.
+# Usage: ./scripts/build_and_push.sh
+#
+# Environment variables:
+#   GCP_PROJECT_ID          — GCP project ID (required)
+#   GCP_REGION              — GAR region (default: us-central1)
+#   IMAGE_NAME              — Image name (default: {{ package_name }})
+#   ARTIFACT_REGISTRY_REPO  — GAR repository name (default: {{ package_name | replace("_", "-") }})
+#   PLATFORM                — Build platform (default: linux/amd64 for GCP deployment)
 
 set -euo pipefail
 
@@ -11,9 +18,8 @@ PLATFORM="${PLATFORM:-linux/amd64}"
 # Configuration — override via environment variables or edit here
 PROJECT_ID="${GCP_PROJECT_ID:-your-gcp-project-id}"
 REGION="${GCP_REGION:-us-central1}"
-JOB_NAME="${JOB_NAME:-{{ package_name }}-pipeline}"
 IMAGE_NAME="${IMAGE_NAME:-{{ package_name }}}"
-ARTIFACT_REGISTRY_REPO="${ARTIFACT_REGISTRY_REPO:-{{ package_name }}}"
+ARTIFACT_REGISTRY_REPO="${ARTIFACT_REGISTRY_REPO:-{{ package_name | replace("_", "-") }}}"
 IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${IMAGE_NAME}:latest"
 
 # Colors for output
@@ -46,17 +52,14 @@ fi
 
 print_info "Project  : ${PROJECT_ID}"
 print_info "Region   : ${REGION}"
-print_info "Job      : ${JOB_NAME}"
 print_info "Image    : ${IMAGE_TAG}"
+print_info "Platform : ${PLATFORM}"
 
 gcloud config set project "${PROJECT_ID}" --quiet
 
-# Enable required APIs
-print_info "Enabling required Google Cloud APIs..."
-gcloud services enable \
-    run.googleapis.com \
-    artifactregistry.googleapis.com \
-    --project="${PROJECT_ID}"
+# Enable required API
+print_info "Enabling Artifact Registry API..."
+gcloud services enable artifactregistry.googleapis.com --project="${PROJECT_ID}"
 
 # Create Artifact Registry repository if it doesn't exist
 print_info "Checking Artifact Registry repository..."
@@ -76,7 +79,7 @@ fi
 print_info "Configuring Docker authentication..."
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
-# Build and push the Docker image
+# Build the Docker image
 print_info "Building Docker image (platform: ${PLATFORM})..."
 GAR_TOKEN=$(gcloud auth print-access-token) docker build \
     --secret id=gar_token,env=GAR_TOKEN \
@@ -85,39 +88,9 @@ GAR_TOKEN=$(gcloud auth print-access-token) docker build \
     --tag "${IMAGE_TAG}" \
     .
 
+# Push the Docker image
 print_info "Pushing image to Artifact Registry..."
 docker push "${IMAGE_TAG}"
 
-# Create or update the Cloud Run Job
-if gcloud run jobs describe "${JOB_NAME}" \
-    --region "${REGION}" \
-    --project "${PROJECT_ID}" &>/dev/null; then
-    print_info "Job ${JOB_NAME} already exists. Updating..."
-    gcloud run jobs update "${JOB_NAME}" \
-        --image "${IMAGE_TAG}" \
-        --region "${REGION}" \
-        --project "${PROJECT_ID}" \
-        --memory 2Gi \
-        --cpu 2 \
-        --task-timeout 3600 \
-        --max-retries 3 \
-        --update-env-vars "PYTHONUNBUFFERED=1" \
-        --quiet
-else
-    print_info "Creating new job ${JOB_NAME}..."
-    gcloud run jobs create "${JOB_NAME}" \
-        --image "${IMAGE_TAG}" \
-        --region "${REGION}" \
-        --project "${PROJECT_ID}" \
-        --memory 2Gi \
-        --cpu 2 \
-        --task-timeout 3600 \
-        --max-retries 3 \
-        --set-env-vars "PYTHONUNBUFFERED=1" \
-        --quiet
-fi
-
-print_info "Deployment complete!"
-print_info ""
-print_info "To run a pipeline, execute:"
-print_info "  ./scripts/run_pipeline_cloud_run.sh pipelines/complete_pipeline.yaml"
+print_info "Build and push complete!"
+print_info "Image available at: ${IMAGE_TAG}"

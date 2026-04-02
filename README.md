@@ -52,29 +52,24 @@ To run it locally:
 
 ```bash
 just docker-build
-just pipeline-yaml {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline
-just pipeline-run pipelines/complete_pipeline.yaml
+uv run mlops_lib generate_pipeline_config {{ package_name }}/pipelines/complete_pipeline.py complete_pipeline -o pipelines/complete_pipeline.yaml
+uv run mlops_lib run_pipeline pipelines/complete_pipeline.yaml --mode local
 ```
 
 To run it on Cloud Run Jobs:
 
 ```bash
-# 1. Build the image, push to Artifact Registry, and create/update the job (once per image change)
-# Note: Cloud Run job names do not allow underscores — use hyphens instead (e.g. my-package-pipeline)
-GCP_PROJECT_ID="<your-gcp-project-id>" \
-GCP_REGION="us-central1" \
-JOB_NAME="{{ package_name }}-pipeline" \
-IMAGE_NAME="{{ package_name }}" \
-ARTIFACT_REGISTRY_REPO="<your-artifact-repo>" \
-bash scripts/deploy_cloud_run.sh
+# 1. Build the Docker image and push it to Artifact Registry
+# Note: Artifact Registry repository names do not allow underscores — use hyphens instead
+#       e.g. if package_name is "fraud_new", the GAR repo must be "fraud-new"
+GCP_PROJECT_ID=<your-gcp-project-id> ARTIFACT_REGISTRY_REPO=<gar-repo-name> ./scripts/build_and_push.sh
 
 # 2. Execute the pipeline
-GCP_PROJECT_ID="<your-gcp-project-id>" \
-GCP_REGION="us-central1" \
-JOB_NAME="{{ package_name }}-pipeline" \
-IMAGE_NAME="{{ package_name }}" \
-ARTIFACT_REGISTRY_REPO="<your-artifact-repo>" \
-bash scripts/run_pipeline_cloud_run.sh pipelines/complete_pipeline.yaml
+uv run mlops_lib run_pipeline pipelines/complete_pipeline.yaml \
+  --mode cloud_run_job \
+  --gcp-project <your-gcp-project-id> \
+  --job-name {{ package_name }}-pipeline \
+  --image us-central1-docker.pkg.dev/<your-gcp-project-id>/<gar-repo-name>/{{ package_name }}:latest
 ```
 
 ## Adding a new pipeline
@@ -90,11 +85,11 @@ bash scripts/run_pipeline_cloud_run.sh pipelines/complete_pipeline.yaml
    ```
 4. Generate its YAML config:
    ```bash
-   just pipeline-yaml {{ package_name }}/pipelines/my_pipeline.py my_pipeline
+   uv run mlops_lib generate_pipeline_config {{ package_name }}/pipelines/my_pipeline.py my_pipeline -o pipelines/my_pipeline.yaml
    ```
 5. Run it:
    ```bash
-   just pipeline-run pipelines/my_pipeline.yaml
+   uv run mlops_lib run_pipeline pipelines/my_pipeline.yaml --mode local
    ```
 
 ## Keeping your project up to date
