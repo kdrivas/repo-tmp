@@ -58,17 +58,26 @@ uv run mlops_lib run_pipeline pipelines/complete_pipeline.yaml --mode local
 
 To run it on Cloud Run Jobs:
 
-```bash
-# 1. Build the Docker image and push it to Artifact Registry
-# Note: Artifact Registry repository names do not allow underscores — use hyphens instead
-#       e.g. if package_name is "fraud_new", the GAR repo must be "fraud-new"
-GCP_PROJECT_ID=<your-gcp-project-id> ARTIFACT_REGISTRY_REPO=<gar-repo-name> ./scripts/build_and_push.sh
+> **Note:** Artifact Registry repository names and Cloud Run Job names do not allow underscores — use hyphens.
+> e.g. if `package_name` is `fraud_new`, use `fraud-new` for the GAR repo and job name.
 
-# 2. Execute the pipeline
+```bash
+# 1. Update pipelines/complete_pipeline.yaml with the GAR image before building.
+#    pipeline.image is the container Flyte uses to run each task — it must point to GAR:
+#
+#    pipeline:
+#      image:
+#        name: us-central1-docker.pkg.dev/<your-gcp-project-id>/<gar-repo-name>/{{ package_name }}
+#        tag: latest
+
+# 2. Build the Docker image and push it to Artifact Registry
+GCP_PROJECT_ID=<your-gcp-project-id> ARTIFACT_REGISTRY_REPO=<gar-repo-name> bash scripts/build_and_push.sh
+
+# 3. Execute the pipeline
 uv run mlops_lib run_pipeline pipelines/complete_pipeline.yaml \
   --mode cloud_run_job \
   --gcp-project <your-gcp-project-id> \
-  --job-name {{ package_name }}-pipeline \
+  --job-name <gar-repo-name>-pipeline \
   --image us-central1-docker.pkg.dev/<your-gcp-project-id>/<gar-repo-name>/{{ package_name }}:latest
 ```
 
